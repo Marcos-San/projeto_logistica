@@ -9,12 +9,13 @@
             <h1>Bem-vindo ao LogiTrans</h1>
             <p>Sistema completo de gestão de logística e entregas</p>
             {% if not user.is_authenticated %}
-                <a href="{% url 'login' %}" class="btn-primary">Começar Agora</a>
+                <a href="{% url 'home' %}" class="btn-primary">Começar Agora</a>
             {% endif %}
         </div>
     </div>
 </section>
 
+{% if user.is_authenticated %}
 <section class="features">
     <div class="container">
         <h2>Recursos do Sistema</h2>
@@ -53,7 +54,6 @@
     </div>
 </section>
 
-{% if user.is_authenticated %}
 <section class="dashboard-preview">
     <div class="container">
         <h2>Dashboard Rápido</h2>

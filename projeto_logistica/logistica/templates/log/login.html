@@ -3,10 +3,38 @@
 {% block title %}Login{% endblock %}
 
 {% block content %}
-<h1>Login</h1>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Entrar</button>
-</form>
+<section class="auth-section">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h2>🚚 Entrar no Sistema</h2>
+                <p>Acesse sua conta LogiTrans</p>
+            </div>
+
+            <form method="post" class="auth-form" action="{% url 'home' %}">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                    <div class="error-message">
+                        <p>Usuário ou senha incorretos. Tente novamente.</p>
+                    </div>
+                {% endif %}
+
+                <div class="form-group">
+                <label for="id_username">Usuário:</label>
+                {{ form.username }}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_password">Senha:</label>
+                    {{ form.password }}
+                </div>
+
+
+                <button type="submit" class="btn-submit">Entrar</button>
+                <input type="hidden" name="next" value="{{ next }}">
+            </form>
+        </div>
+    </div>
+</section>
 {% endblock %}

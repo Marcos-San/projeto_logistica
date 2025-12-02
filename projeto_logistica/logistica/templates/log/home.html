@@ -8,10 +8,38 @@
         <div class="hero-content">
             <h1>Bem-vindo ao LogiTrans</h1>
             <p>Rastrear entrega</p>
-            <input type="text" class="search-input" placeholder="">
-            <a href="{% url 'login' %}" class="btn-primary">Consultar</a>
-
+            <div class="search-box">
+                <input type="text" class="search-input" placeholder="Digite o código de rastreamento">
+                <a href="{% url 'login' %}" class="btn-primary">Consultar</a>
+            </div>
         </div>
     </div>
 </section>
+
+
+{% if user.is_authenticated %}
+<section class="dashboard-preview">
+    <div class="container">
+        <h2>Dashboard Rápido</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>24</h3>
+                <p>Entregas Hoje</p>
+            </div>
+            <div class="stat-card">
+                <h3>8</h3>
+                <p>Em Trânsito</p>
+            </div>
+            <div class="stat-card">
+                <h3>12</h3>
+                <p>Motoristas Ativos</p>
+            </div>
+            <div class="stat-card">
+                <h3>96%</h3>
+                <p>Taxa de Sucesso</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
 {% endblock %}

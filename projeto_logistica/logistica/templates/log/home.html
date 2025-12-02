@@ -1,0 +1,17 @@
+{% extends 'log/base.html' %}
+
+{% block title %}Início - Sistema de Logística{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="container">
+        <div class="hero-content">
+            <h1>Bem-vindo ao LogiTrans</h1>
+            <p>Rastrear entrega</p>
+            <input type="text" class="search-input" placeholder="">
+            <a href="{% url 'login' %}" class="btn-primary">Consultar</a>
+
+        </div>
+    </div>
+</section>
+{% endblock %}

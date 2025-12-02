@@ -5,30 +5,32 @@ class Cliente(models.Model):
     email = models.EmailField(),
     telefone = models.IntegerField()
 
+
 class Entrega(models.Model):
     STATUS_ENTREGA = [
         ('pendente', 'Pendente'),
         ('em_transito', 'Em trânsito'),
         ('entregue', 'Entregue'),
         ('cancelada', 'Cancelada'),
-        ('remarcada', 'Remarca'),
+        ('remarcada', 'Remarcada'),
     ]
-    codigo_rastreio = models.IntegerField(unique=True),
-    cliente = models.ForeignKey(Cliente),
-    endereco_origem = models.CharField(max_length=100),
-    cep_origem = models.IntegerField(max_length=8),
-    endereco_destino = models.CharField(max_length=100),
-    cep_destino = models.IntegerField(max_length=8),
-    status = models.CharField(max_length=10, choices=STATUS_ENTREGA, default='pendente')
-    capacidade_necessaria = models.FloatField(),
-    valor_frete = models.FloatField(),
-    data_solicitacao = models.DateField(),
-    data_entrega_prevista = models.DateField(),
-    data_entrega_real = models.DateField(),
-    obs = models.TextField(),
+
+    codigo_rastreio = models.IntegerField(unique=True)
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
+    endereco_origem = models.CharField(max_length=100)
+    cep_origem = models.CharField(max_length=100)
+    endereco_destino = models.CharField(max_length=100)
+    cep_destino = models.CharField(max_length=8)
+    status = models.CharField(max_length=100, choices=STATUS_ENTREGA, default='pendente')
+    capacidade_necessaria = models.FloatField()
+    valor_frete = models.FloatField()
+    data_solicitacao = models.DateField()
+    data_entrega_prevista = models.DateField()
+    data_entrega_real = models.DateField(null=True, blank=True)
+    obs = models.TextField()
 
     def __str__(self):
-        return self.codigo_rastreio
+        return str(self.codigo_rastreio)
 
 class Motorista(models.Model):
     STATUS_MOTORISTA = [
@@ -38,9 +40,9 @@ class Motorista(models.Model):
         ('disponível', 'Disponivel'),
     ]
     nome = models.CharField(max_length=100)
-    cpf = models.IntegerField(max_length=11,unique=True)
+    cpf = models.IntegerField(unique=True)
     cnh = models.CharField(max_length=100)
-    telefone = models.IntegerField(max_length=11)
+    telefone = models.CharField(max_length=100)
     status = models.CharField(max_length=100, choices=STATUS_MOTORISTA, default='ativo')
     data_cadastro = models.DateField()
 
@@ -59,13 +61,13 @@ class Veiculo(models.Model):
         ('van', 'Van'),
         ('caminha', 'Caminhão'),
     ]
-    placa = models.CharField(max_length=7),
-    modelo = models.CharField(max_length=100),
-    tipo = models.CharField(max_length=20, choices=TIPO_VEICULO),
-    capacidade_maxima = models.FloatField(),
-    km_atual = models.IntegerField(),
-    status = models.CharField(max_length=50, choices=STATUS_VEICULO, default='disponivel'),
-    motorista = models.ForeignKey(Motorista)
+    placa = models.CharField(max_length=100)
+    modelo = models.CharField(max_length=100)
+    tipo = models.CharField(max_length=100, choices=TIPO_VEICULO)
+    capacidade_maxima = models.FloatField()
+    km_atual = models.IntegerField()
+    status = models.CharField(max_length=50, choices=STATUS_VEICULO, default='disponivel')
+    motorista = models.ForeignKey(Motorista, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.placa
@@ -76,15 +78,15 @@ class Rota(models.Model):
         ('em_andamento', 'Em andamento'),
         ('concluida', 'Concluida'),
     ]
-    nome = models.CharField(max_length=100),
-    descricao = models.TextField(),
-    entrega = models.ForeignKey(Entrega),
-    motorista = models.ForeignKey(Motorista),
-    veiculo = models.ForeignKey(Veiculo),
-    data_rota = models.DateField(),
-    status = models.CharField(max_length=20, choices=STATUS_ROTA, default='planejada'),
-    capacidade_total_utilizada = models.FloatField(),
-    km_total_estimado = models.IntegerField(),
+    nome = models.CharField(max_length=100)
+    descricao = models.TextField()
+    entrega = models.ForeignKey(Entrega, on_delete=models.CASCADE)
+    motorista = models.ForeignKey(Motorista, on_delete=models.CASCADE)
+    veiculo = models.ForeignKey(Veiculo, on_delete=models.CASCADE)
+    data_rota = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS_ROTA, default='planejada')
+    capacidade_total_utilizada = models.FloatField()
+    km_total_estimado = models.IntegerField()
     tempo_estimado = models.DateField()
 
     def __str__(self):

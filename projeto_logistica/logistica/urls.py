@@ -14,5 +14,8 @@ urlpatterns = [
         ),
         name='login'
         ),
-    path('logout/', custom_logout, name='logout')
+    path('logout/', custom_logout, name='logout'),
+
+    path('list_motorista/', views.list_motorista, name='list_motorista'),
+    path('criar_motorista/', views.criar_motorista, name='criar_motorista'),
 ]

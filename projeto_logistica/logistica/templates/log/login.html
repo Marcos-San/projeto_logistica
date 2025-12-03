@@ -11,7 +11,7 @@
                 <p>Acesse sua conta LogiTrans</p>
             </div>
 
-            <form method="post" class="auth-form" action="{% url 'home' %}">
+            <form method="post" class="auth-form">
                 {% csrf_token %}
 
                 {% if form.errors %}

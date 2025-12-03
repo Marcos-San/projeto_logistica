@@ -6,8 +6,6 @@ from .views import custom_logout
 
 urlpatterns = [
     path('', views.home, name='home'),
-    path('index/', views.index, name='index'),
-
     path(
         'login/',
         auth_views.LoginView.as_view(

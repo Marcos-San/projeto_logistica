@@ -8,7 +8,7 @@
         <div class="hero-content">
             <h1>Motoristas</h1>
             <p>Cadastro e gerenciamento de equipe de motoristas</p>
-                <a href="{% url 'home' %}" class="btn-primary">Cadastrar motorista</a>
+                <a href="{% url 'criar_motorista' %}" class="btn-primary">Cadastrar motorista</a>
         </div>
     </div>
 </section>
@@ -26,7 +26,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for sala in salas %}
+                {% for motorista in motoristas %}
                 <tr>
                     <td>{{ motorista.nome }}</td>
                     <td>{{ motorista.cnh }}</td>
@@ -75,28 +75,5 @@
     </div>
 </section>
 
-<section class="dashboard-preview">
-    <div class="container">
-        <h2>Dashboard Rápido</h2>
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h3>24</h3>
-                <p>Entregas Hoje</p>
-            </div>
-            <div class="stat-card">
-                <h3>8</h3>
-                <p>Em Trânsito</p>
-            </div>
-            <div class="stat-card">
-                <h3>12</h3>
-                <p>Motoristas Ativos</p>
-            </div>
-            <div class="stat-card">
-                <h3>96%</h3>
-                <p>Taxa de Sucesso</p>
-            </div>
-        </div>
-    </div>
-</section>
 {% endif %}
 {% endblock %}

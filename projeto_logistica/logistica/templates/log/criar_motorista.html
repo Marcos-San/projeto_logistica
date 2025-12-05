@@ -1,4 +1,5 @@
 {% extends 'log/base.html' %}
+{% load crispy_forms_tags %}
 
 {% block title %}Início - Sistema de Logística{% endblock %}
 
@@ -6,74 +7,13 @@
 <section class="hero">
     <div class="container">
         <div class="hero-content">
-            <h1>Motoristas</h1>
-            <p>Cadastro e gerenciamento de equipe de motoristas</p>
-                <a href="{% url 'home' %}" class="btn-primary">Cadastrar motorista</a>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <button type="submit" class="btn btn-success">Salvar</button>
+            </form>
         </div>
     </div>
 </section>
 
-{% if user.is_authenticated %}
-<section class="features">
-    <div class="container">
-        <h2>Recursos do Sistema</h2>
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon">📦</div>
-                <h3>Gestão de Entregas</h3>
-                <p>Controle completo de todas as entregas em tempo real</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">👨‍💼</div>
-                <h3>Motoristas</h3>
-                <p>Cadastro e gerenciamento de equipe de motoristas</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🚛</div>
-                <h3>Frota de Veículos</h3>
-                <p>Controle da frota e manutenções programadas</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">📊</div>
-                <h3>Relatórios</h3>
-                <p>Análises detalhadas e estatísticas de performance</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">📍</div>
-                <h3>Rastreamento</h3>
-                <p>Acompanhe entregas em tempo real no mapa</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">⚡</div>
-                <h3>Otimização de Rotas</h3>
-                <p>Rotas inteligentes para economia e eficiência</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<section class="dashboard-preview">
-    <div class="container">
-        <h2>Dashboard Rápido</h2>
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h3>24</h3>
-                <p>Entregas Hoje</p>
-            </div>
-            <div class="stat-card">
-                <h3>8</h3>
-                <p>Em Trânsito</p>
-            </div>
-            <div class="stat-card">
-                <h3>12</h3>
-                <p>Motoristas Ativos</p>
-            </div>
-            <div class="stat-card">
-                <h3>96%</h3>
-                <p>Taxa de Sucesso</p>
-            </div>
-        </div>
-    </div>
-</section>
-{% endif %}
 {% endblock %}

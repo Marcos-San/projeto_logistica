@@ -16,16 +16,26 @@ def custom_logout(request):
 
 @login_required()
 def list_motorista(request):
-    motoristas = MotoristaForm()
-    context = {
-        'motorista': motoristas
-    }
-    return render(request, 'log/list_motorista.html')
+    motoristas = Motorista.objects.all()
+    return render(request, 'log/list_motorista.html', {'motoristas': motoristas})
 
 @login_required()
 def criar_motorista(request):
-    form = MotoristaForm()
-    context = {
-        'form': form
-    }
-    return render(request, 'log/criar_motorista.html')
+    context = {}
+    if request.method == 'GET':
+        form = MotoristaForm()
+        context['form'] = MotoristaForm()
+        return render(request, 'log/criar_motorista.html', context)
+    elif request.method == 'POST' and request.FILES != None:
+        form = MotoristaForm(request.POST, request.FILES)
+        if form.is_valid():
+            new = Motorista()
+            new.nome = form['nome'].value()
+            new.cpf = form['cpf'].value()
+            new.cnh = form['cnh'].value()
+            new.telefone = form['telefone'].value()
+            new.status = form['status'].value
+            new.data_cadastro = form['data_cadastro'].value()
+
+            new.save()
+            return redirect('log/list_motorista.html')

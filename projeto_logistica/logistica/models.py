@@ -39,9 +39,16 @@ class Motorista(models.Model):
         ('em_rota', 'Em Rota'),
         ('disponível', 'Disponivel'),
     ]
+
+    TIPO_CNH = [
+        ('b', 'B'),
+        ('c', 'C'),
+        ('d', 'D'),
+        ('e', 'E'),
+    ]
     nome = models.CharField(max_length=100)
     cpf = models.IntegerField(unique=True)
-    cnh = models.CharField(max_length=100)
+    cnh = models.CharField(max_length=100, choices=TIPO_CNH)
     telefone = models.CharField(max_length=100)
     status = models.CharField(max_length=100, choices=STATUS_MOTORISTA, default='ativo')
     data_cadastro = models.DateField()

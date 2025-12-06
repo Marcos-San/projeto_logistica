@@ -24,18 +24,25 @@ def criar_motorista(request):
     context = {}
     if request.method == 'GET':
         form = MotoristaForm()
-        context['form'] = MotoristaForm()
+        context = {
+            'form' : form
+        }
         return render(request, 'log/criar_motorista.html', context)
-    elif request.method == 'POST' and request.FILES != None:
-        form = MotoristaForm(request.POST, request.FILES)
+    else:
+        form = MotoristaForm(request.POST)
         if form.is_valid():
             new = Motorista()
             new.nome = form['nome'].value()
             new.cpf = form['cpf'].value()
             new.cnh = form['cnh'].value()
             new.telefone = form['telefone'].value()
-            new.status = form['status'].value
+            new.status = form.cleaned_data['status']
             new.data_cadastro = form['data_cadastro'].value()
 
             new.save()
-            return redirect('log/list_motorista.html')
+        context = {
+            'form': form,
+            'mensagem' : "Motorista cadastrado com sucesso!"
+        }
+
+        return render(request, 'log/criar_motorista.html', context=context)

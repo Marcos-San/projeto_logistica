@@ -41,10 +41,10 @@ class Motorista(models.Model):
     ]
 
     TIPO_CNH = [
-        ('b', 'B'),
-        ('c', 'C'),
-        ('d', 'D'),
-        ('e', 'E'),
+        ('B', 'B'),
+        ('C', 'C'),
+        ('D', 'D'),
+        ('E', 'E'),
     ]
     nome = models.CharField(max_length=100)
     cpf = models.IntegerField(unique=True)

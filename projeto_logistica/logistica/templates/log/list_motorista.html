@@ -1,44 +1,93 @@
 {% extends 'log/base.html' %}
 
-{% block title %}Início - Sistema de Logística{% endblock %}
+{% block title %}Lista de Motoristas - Sistema de Logística{% endblock %}
 
 {% block content %}
-<section class="hero">
+<section class="hero hero-small">
     <div class="container">
         <div class="hero-content">
-            <h1>Motoristas</h1>
+            <h1>👨‍💼 Motoristas</h1>
             <p>Cadastro e gerenciamento de equipe de motoristas</p>
-                <a href="{% url 'criar_motorista' %}" class="btn-primary">Cadastrar motorista</a>
+            <a href="{% url 'criar_motorista' %}" class="btn-primary">+ Cadastrar Motorista</a>
         </div>
     </div>
 </section>
 
-{% if user.is_authenticated %}
+<section class="page-section">
+    <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>CNH</th>
+                        <th>Status</th>
+                        <th class="actions-column">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for motorista in motoristas %}
+                    <tr>
+                        <td>#{{ motorista.id }}</td>
+                        <td>
+                            <div class="driver-info">
+                                <div class="driver-avatar">{{ motorista.nome|first|upper }}</div>
+                                <span class="driver-name">{{ motorista.nome }}</span>
+                            </div>
+                        </td>
+                        <td>{{ motorista.cnh }}</td>
+                        <td>
+                            {% if motorista.status == "Ativo" or motorista.status == "ativo" %}
+                                <span class="badge badge-success">{{ motorista.status }}</span>
+                            {% elif motorista.status == "Inativo" or motorista.status == "inativo" %}
+                                <span class="badge badge-danger">{{ motorista.status }}</span>
+                            {% else %}
+                                <span class="badge badge-warning">{{ motorista.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'atualizar_motorista' motorista.id %}"
+                                   class="btn-action btn-edit"
+                                   title="Editar">
+                                    ✏️ Editar
+                                </a>
+                                <a href="{% url 'deletar_motorista' motorista.id %}"
+                                   class="btn-action btn-delete"
+                                   title="Deletar"
+                                   onclick="return confirm('Tem certeza que deseja deletar este motorista?')">
+                                    🗑️ Deletar
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <div class="empty-icon">📋</div>
+                            <p>Nenhum motorista cadastrado</p>
+                            <a href="{% url 'criar_motorista' %}" class="btn-primary">Cadastrar Primeiro Motorista</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+{% if motoristas %}
 <section class="features">
     <div class="container">
-        <br>
-        <table style="width:250px;">
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>CNH</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for motorista in motoristas %}
-                <tr>
-                    <td>{{ motorista.nome }}</td>
-                    <td>{{ motorista.cnh }}</td>
-                    <td>{{ motorista.status }}</td>
-                    <td>
-                        <a href="">Editar</a>
-                        <a href="">Excluir</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
         <h2>Recursos do Sistema</h2>
         <div class="features-grid">
             <div class="feature-card">
@@ -74,6 +123,6 @@
         </div>
     </div>
 </section>
-
 {% endif %}
+
 {% endblock %}

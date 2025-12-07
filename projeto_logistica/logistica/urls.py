@@ -18,4 +18,6 @@ urlpatterns = [
 
     path('list_motorista/', views.list_motorista, name='list_motorista'),
     path('criar_motorista/', views.criar_motorista, name='criar_motorista'),
+    path('deletar_motorista/<int:id>', views.deletar_motorista, name='deletar_motorista'),
+    path('atualizar_motorista/<int:id>', views.atualizar_motorista, name='atualizar_motorista'),
 ]

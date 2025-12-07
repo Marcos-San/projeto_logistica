@@ -1,5 +1,6 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 
 from .forms import MotoristaForm
 from .models import *
@@ -14,6 +15,8 @@ def custom_logout(request):
     logout(request)
     return redirect('home')
 
+
+# ========== CRUD MOTORISTA ==========
 @login_required()
 def list_motorista(request):
     motoristas = Motorista.objects.all()
@@ -41,8 +44,35 @@ def criar_motorista(request):
 
             new.save()
         context = {
-            'form': form,
-            'mensagem' : "Motorista cadastrado com sucesso!"
+            messages.success(request, 'Motorista cadastrado com sucesso!')
         }
 
-        return render(request, 'log/criar_motorista.html', context=context)
+        return redirect('list_motorista')
+
+
+@login_required()
+def atualizar_motorista(request, id):
+    motorista = get_object_or_404(Motorista, id=id)
+
+    if request.method == 'POST':
+        form = MotoristaForm(request.POST, instance=motorista)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Dados atualizados com sucesso!')
+            return redirect('list_motorista')  # ajuste para a URL correta
+    else:
+        # GET → mostra o formulário com dados carregados
+        form = MotoristaForm(instance=motorista)
+
+    context = {
+        'form': form
+    }
+    return render(request, 'log/atualizar_motorista.html', context)
+
+@login_required()
+def deletar_motorista(request, id):
+    motorista = get_object_or_404(Motorista, id=id)
+    motorista.delete()
+    messages.success(request, 'Motorista deletado com sucesso!')
+    return redirect('list_motorista')

@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404
 
-from .forms import MotoristaForm
+from .forms import *
 from .models import *
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
@@ -14,6 +14,8 @@ def home(request):
 def custom_logout(request):
     logout(request)
     return redirect('home')
+
+
 
 
 # ========== CRUD MOTORISTA ==========
@@ -60,9 +62,8 @@ def atualizar_motorista(request, id):
         if form.is_valid():
             form.save()
             messages.success(request, 'Dados atualizados com sucesso!')
-            return redirect('list_motorista')  # ajuste para a URL correta
+            return redirect('list_motorista')
     else:
-        # GET → mostra o formulário com dados carregados
         form = MotoristaForm(instance=motorista)
 
     context = {
@@ -76,3 +77,62 @@ def deletar_motorista(request, id):
     motorista.delete()
     messages.success(request, 'Motorista deletado com sucesso!')
     return redirect('list_motorista')
+
+
+
+# ========== CRUD CLIENTE ==========
+@login_required()
+def list_cliente(request):
+    clientes = Cliente.objects.all()
+    return render(request, 'log/list_cliente.html', {'clientes': clientes})
+
+@login_required()
+def criar_cliente(request):
+    context = {}
+    if request.method == 'GET':
+        form = ClienteForm()
+        context = {
+            'form' : form
+        }
+        return render(request, 'log/criar_cliente.html', context)
+    else:
+        form = ClienteForm(request.POST)
+        if form.is_valid():
+            new = Cliente()
+            new.nome = form['nome'].value()
+            new.email = form['email'].value()
+            new.telefone = form['telefone'].value()
+
+            new.save()
+        context = {
+            messages.success(request, 'Cliente cadastrado com sucesso!')
+        }
+
+        return redirect('list_cliente')
+
+
+@login_required()
+def atualizar_cliente(request, id):
+    cliente = get_object_or_404(Cliente, id=id)
+
+    if request.method == 'POST':
+        form = ClienteForm(request.POST, instance=cliente)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Dados atualizados com sucesso!')
+            return redirect('list_cliente')
+    else:
+        form = ClienteForm(instance=cliente)
+
+    context = {
+        'form': form
+    }
+    return render(request, 'log/atualizar_cliente.html', context)
+
+@login_required()
+def deletar_cliente(request, id):
+    cliente = get_object_or_404(Cliente, id=id)
+    cliente.delete()
+    messages.success(request, 'Cliente deletado com sucesso!')
+    return redirect('list_cliente')

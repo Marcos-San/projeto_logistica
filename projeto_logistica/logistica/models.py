@@ -1,9 +1,11 @@
+from importlib.metadata import requires
+
 from django.db import models
 
 class Cliente(models.Model):
-    nome = models.CharField(max_length=100),
-    email = models.EmailField(),
-    telefone = models.IntegerField()
+    nome = models.CharField(max_length=100)
+    email = models.EmailField()
+    telefone = models.CharField(max_length=100)
 
 
 class Entrega(models.Model):

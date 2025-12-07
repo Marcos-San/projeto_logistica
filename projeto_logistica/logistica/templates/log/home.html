@@ -20,6 +20,30 @@
 {% if user.is_authenticated %}
 <section class="features">
     <div class="container">
+        <h2>Dashboard Rápido</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>24</h3>
+                <p>Entregas Hoje</p>
+            </div>
+            <div class="stat-card">
+                <h3>8</h3>
+                <p>Em Trânsito</p>
+            </div>
+            <div class="stat-card">
+                <h3>12</h3>
+                <p>Motoristas Ativos</p>
+            </div>
+            <div class="stat-card">
+                <h3>96%</h3>
+                <p>Taxa de Sucesso</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="dashboard-preview">
+    <div class="container">
         <h2>Recursos do Sistema</h2>
         <div class="features-grid">
             <div class="feature-card">
@@ -29,7 +53,7 @@
             </div>
             <div class="feature-card">
                 <div class="feature-icon">👨‍💼</div>
-                <h3>Motoristas</h3>
+                <a href="{% url 'list_motorista' %}" class="nav-link">Motoristas</a>
                 <p>Cadastro e gerenciamento de equipe de motoristas</p>
             </div>
             <div class="feature-card">
@@ -51,30 +75,6 @@
                 <div class="feature-icon">⚡</div>
                 <h3>Otimização de Rotas</h3>
                 <p>Rotas inteligentes para economia e eficiência</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<section class="dashboard-preview">
-    <div class="container">
-        <h2>Dashboard Rápido</h2>
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h3>24</h3>
-                <p>Entregas Hoje</p>
-            </div>
-            <div class="stat-card">
-                <h3>8</h3>
-                <p>Em Trânsito</p>
-            </div>
-            <div class="stat-card">
-                <h3>12</h3>
-                <p>Motoristas Ativos</p>
-            </div>
-            <div class="stat-card">
-                <h3>96%</h3>
-                <p>Taxa de Sucesso</p>
             </div>
         </div>
     </div>

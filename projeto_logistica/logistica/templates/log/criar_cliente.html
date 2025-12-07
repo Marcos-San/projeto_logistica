@@ -1,14 +1,14 @@
 {% extends 'log/base.html' %}
 {% load crispy_forms_tags %}
 
-{% block title %}Cadastrar Motorista - Sistema de Logística{% endblock %}
+{% block title %}Cadastrar Cliente - Sistema de Logística{% endblock %}
 
 {% block content %}
 <section class="page-section">
     <div class="container">
         <div class="page-header">
-            <h1>👨‍💼 Cadastrar Novo Motorista</h1>
-            <a href="{% url 'list_motorista' %}" class="btn-secondary">← Voltar</a>
+            <h1>👨‍💼 Cadastrar Novo Cliente</h1>
+            <a href="{% url 'list_cliente' %}" class="btn-secondary">← Voltar</a>
         </div>
 
         <div class="form-card">
@@ -26,9 +26,9 @@
 
                 <div class="form-actions">
                     <button type="submit" class="btn-submit">
-                        <span>✓</span> Salvar Motorista
+                        <span>✓</span> Salvar Cliente
                     </button>
-                    <a href="{% url 'list_motorista' %}" class="btn-cancel">Cancelar</a>
+                    <a href="{% url 'list_cliente' %}" class="btn-cancel">Cancelar</a>
                 </div>
             </form>
         </div>

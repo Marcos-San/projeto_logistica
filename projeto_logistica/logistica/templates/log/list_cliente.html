@@ -1,0 +1,80 @@
+{% extends 'log/base.html' %}
+
+{% block title %}Lista de Clientes - Sistema de Logística{% endblock %}
+
+{% block content %}
+<section class="hero hero-small">
+    <div class="container">
+        <div class="hero-content">
+            <h1>👨‍💼 Clientes</h1>
+            <p>Cadastro e gerenciamento de clientes</p>
+            <a href="{% url 'criar_cliente' %}" class="btn-primary">+ Cadastrar Cliente</a>
+        </div>
+    </div>
+</section>
+
+<section class="page-section">
+    <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>E-mail</th>
+                        <th>Telefone</th>
+                        <th class="actions-column">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cliente in clientes %}
+                    <tr>
+                        <td>#{{ cliente.id }}</td>
+                        <td>
+                            <div class="driver-info">
+                                <div class="driver-avatar">{{ cliente.nome|first|upper }}</div>
+                                <span class="driver-name">{{ cliente.nome }}</span>
+                            </div>
+                        </td>
+                        <td>{{ cliente.email }}</td>
+                        <td>{{ cliente.telefone }}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'atualizar_cliente' cliente.id %}"
+                                   class="btn-action btn-edit"
+                                   title="Editar">
+                                    ✏️ Editar
+                                </a>
+                                <a href="{% url 'deletar_cliente' cliente.id %}"
+                                   class="btn-action btn-delete"
+                                   title="Deletar"
+                                   onclick="return confirm('Tem certeza que deseja deletar este cliente?')">
+                                    🗑️ Deletar
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <div class="empty-icon">📋</div>
+                            <p>Nenhum cliente cadastrado</p>
+                            <a href="{% url 'criar_cliente' %}" class="btn-primary">Cadastrar Primeiro Cliente</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

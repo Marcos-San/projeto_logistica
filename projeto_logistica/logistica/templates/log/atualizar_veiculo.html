@@ -1,0 +1,37 @@
+{% extends 'log/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Atualizar Veículo - Sistema de Logística{% endblock %}
+
+{% block content %}
+<section class="page-section">
+    <div class="container">
+        <div class="page-header">
+            <h1>✏️ Atualizar Dados do Veículo</h1>
+            <a href="{% url 'list_veiculo' %}" class="btn-secondary">← Voltar</a>
+        </div>
+
+        <div class="form-card">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data" class="form-styled">
+                {% csrf_token %}
+                {{ form|crispy }}
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">
+                        <span>✓</span> Atualizar Veículo
+                    </button>
+                    <a href="{% url 'list_veiculo' %}" class="btn-cancel">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

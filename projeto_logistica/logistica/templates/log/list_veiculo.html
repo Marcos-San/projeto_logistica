@@ -1,0 +1,83 @@
+{% extends 'log/base.html' %}
+
+{% block title %}Lista de Veículos - Sistema de Logística{% endblock %}
+
+{% block content %}
+<section class="hero hero-small">
+    <div class="container">
+        <div class="hero-content">
+            <h1>🚛 Veículos</h1>
+            <p>Cadastro e gerenciamento de veículos</p>
+            <a href="{% url 'criar_veiculo' %}" class="btn-primary">+ Cadastrar Veículo</a>
+        </div>
+    </div>
+</section>
+
+<section class="page-section">
+    <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Placa</th>
+                        <th>Modelo</th>
+                        <th>Tipo</th>
+                        <th>Capacidade</th>
+                        <th>KM atual</th>
+                        <th>Status</th>
+                        <th>Motorista</th>
+                        <th class="actions-column">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for veiculo in veiculos %}
+                    <tr>
+                        <td>#{{ veiculo.id }}</td>
+                        <td>{{ veiculo.placa }}</td>
+                        <td>{{ veiculo.modelo }}</td>
+                        <td>{{ veiculo.tipo }}</td>
+                        <td>{{ veiculo.capacidade }}</td>
+                        <td>{{ veiculo.km_atual }}</td>
+                        <td>{{ veiculo.status }}</td>
+                        <td>{{ veiculo.motorista }}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'atualizar_veiculo' veiculo.id %}"
+                                   class="btn-action btn-edit"
+                                   title="Editar">
+                                    ✏️ Editar
+                                </a>
+                                <a href="{% url 'deletar_veiculo' veiculo.id %}"
+                                   class="btn-action btn-delete"
+                                   title="Deletar"
+                                   onclick="return confirm('Tem certeza que deseja deletar este veículo?')">
+                                    🗑️ Deletar
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <div class="empty-icon">📋</div>
+                            <p>Nenhum veículo cadastrado</p>
+                            <a href="{% url 'criar_veiculo' %}" class="btn-primary">Cadastrar Primeiro Veículo</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

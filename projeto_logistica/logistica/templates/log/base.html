@@ -18,7 +18,7 @@
                 {% if user.is_authenticated %}
                     <li><a href="#" class="nav-link">Entregas</a></li>
                     <li><a href="{% url 'list_motorista' %}" class="nav-link">Motoristas</a></li>
-                    <li><a href="#" class="nav-link">Veículos</a></li>
+                    <li><a href="{% url 'list_veiculo' %}" class="nav-link">Veículos</a></li>
                     <li><a href="{% url 'list_cliente' %}" class="nav-link">Clientes</a></li>
                     <li class="user-info">
                         <span>Olá, {{ user.username }}</span>

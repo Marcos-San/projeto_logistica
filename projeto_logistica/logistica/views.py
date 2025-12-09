@@ -15,6 +15,11 @@ def custom_logout(request):
     logout(request)
     return redirect('home')
 
+def buscar_entrega(request):
+    buscar = request.GET.get('buscar')
+    if buscar == Entrega.codigo_rastreio:
+        resultado = Entrega.objects.filter(codigo_rastreio=buscar)
+    return render(request, 'log/buscar_entrega.html', {'buscar': buscar})
 
 
 
@@ -26,7 +31,6 @@ def list_motorista(request):
 
 @login_required()
 def criar_motorista(request):
-    context = {}
     if request.method == 'GET':
         form = MotoristaForm()
         context = {
@@ -80,68 +84,6 @@ def deletar_motorista(request, id):
 
 
 
-# ========== CRUD VEICULO ==========
-@login_required()
-def list_veiculo(request):
-    veiculos = Veiculo.objects.all()
-    return render(request, 'log/list_veiculo.html', {'veiculos': veiculos})
-
-@login_required()
-def criar_veiculo(request):
-    context = {}
-    if request.method == 'GET':
-        form = VeiculoForm()
-        context = {
-            'form' : form
-        }
-        return render(request, 'log/criar_veiculo.html', context)
-    else:
-        form = VeiculoForm(request.POST)
-        if form.is_valid():
-            new = veiculo()
-            new.placa = form['placa'].value()
-            new.modelo = form['modelo'].value()
-            new.tipo = form['tipo'].value()
-            new.capacidade_maxima = form['capacidade_maxima'].value()
-            new.km_atual = form['km_atual'].value()
-            new.status = form['status'].value ()
-            new.motorista = form['motorista'].value()
-
-            new.save()
-        context = {
-            messages.success(request, 'Veiculo cadastrado com sucesso!')
-        }
-
-        return redirect('list_veiculo')
-
-
-@login_required()
-def atualizar_cliente(request, id):
-    cliente = get_object_or_404(Cliente, id=id)
-
-    if request.method == 'POST':
-        form = ClienteForm(request.POST, instance=cliente)
-
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Dados atualizados com sucesso!')
-            return redirect('list_cliente')
-    else:
-        form = ClienteForm(instance=cliente)
-
-    context = {
-        'form': form
-    }
-    return render(request, 'log/atualizar_cliente.html', context)
-
-@login_required()
-def deletar_cliente(request, id):
-    cliente = get_object_or_404(Cliente, id=id)
-    cliente.delete()
-    messages.success(request, 'Cliente deletado com sucesso!')
-    return redirect('list_cliente')
-
-
 # ========== CRUD CLIENTE ==========
 @login_required()
 def list_cliente(request):
@@ -150,7 +92,6 @@ def list_cliente(request):
 
 @login_required()
 def criar_cliente(request):
-    context = {}
     if request.method == 'GET':
         form = ClienteForm()
         context = {
@@ -198,6 +139,7 @@ def deletar_cliente(request, id):
     cliente.delete()
     messages.success(request, 'Cliente deletado com sucesso!')
     return redirect('list_cliente')
+
 
 
 # ========== CRUD VEICULO ==========
@@ -258,50 +200,50 @@ def deletar_veiculo(request, id):
 @login_required()
 def list_entrega(request):
     entregas = Entrega.objects.all()
-    return render(request, 'log/list_veiculo.html', {'veiculos': veiculos})
+    return render(request, 'log/list_entrega.html', {'entregas': entregas})
 
 @login_required()
-def criar_veiculo(request):
+def criar_entrega(request):
     if request.method == 'GET':
-        form = VeiculoForm()
+        form = EntregaForm()
         context = {
             'form' : form
         }
-        return render(request, 'log/criar_veiculo.html', context)
+        return render(request, 'log/criar_entrega.html', context)
     else:
-        form = VeiculoForm(request.POST)
+        form = EntregaForm(request.POST)
         if form.is_valid():
             form.save()
 
         context = {
-            messages.success(request, 'Veiculo cadastrado com sucesso!')
+            messages.success(request, 'Entrega registrada com sucesso!')
         }
 
-        return redirect('list_veiculo')
+        return redirect('list_entrega')
 
 
 @login_required()
-def atualizar_veiculo(request, id):
-    veiculo = get_object_or_404(Veiculo, id=id)
+def atualizar_entrega(request, id):
+    entrega = get_object_or_404(Entrega, id=id)
 
     if request.method == 'POST':
-        form = VeiculoForm(request.POST, instance=veiculo)
+        form = EntregaForm(request.POST, instance=entrega)
 
         if form.is_valid():
             form.save()
             messages.success(request, 'Dados atualizados com sucesso!')
-            return redirect('list_veiculo')
+            return redirect('list_entrega')
     else:
-        form = VeiculoForm(instance=veiculo)
+        form = EntregaForm(instance=entrega)
 
     context = {
         'form': form
     }
-    return render(request, 'log/atualizar_veiculo.html', context)
+    return render(request, 'log/atualizar_entrega.html', context)
 
 @login_required()
-def deletar_veiculo(request, id):
-    veiculo = get_object_or_404(Veiculo, id=id)
-    veiculo.delete()
-    messages.success(request, 'Veiculo deletado com sucesso!')
-    return redirect('list_veiculo')
+def deletar_entrega(request, id):
+    entrega = get_object_or_404(Entrega, id=id)
+    entrega.delete()
+    messages.success(request, 'Entrega deletado com sucesso!')
+    return redirect('list_entrega')

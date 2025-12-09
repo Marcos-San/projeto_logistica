@@ -31,5 +31,10 @@ urlpatterns = [
     path('deletar_veiculo/<int:id>', views.deletar_veiculo, name='deletar_veiculo'),
     path('atualizar_veiculo/<int:id>', views.atualizar_veiculo, name='atualizar_veiculo'),
 
-    path('buscar_entrega/<int:codigo_rastreio>', views.buscar_entrega, name='buscar_entrega'),
+    path('buscar_entrega/', views.buscar_entrega, name='buscar_entrega'),
+
+    path('list_entrega/', views.list_entrega, name='list_entrega'),
+    path('criar_entrega/', views.criar_entrega, name='criar_entrega'),
+    path('deletar_entrega/<int:id>', views.deletar_entrega, name='deletar_entrega'),
+    path('atualizar_entrega/<int:id>', views.atualizar_entrega, name='atualizar_entrega'),
 ]

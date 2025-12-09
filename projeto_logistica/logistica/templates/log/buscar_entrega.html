@@ -6,7 +6,7 @@
 <section class="hero hero-small">
     <div class="container">
         <div class="hero-content">
-            <h1>🚛 Andamento e historico</h1>
+            <h1>🚛 Andamento e Historico</h1>
             <p>{{ entrega.codigo_rastreio }}</p>
         </div>
     </div>
@@ -14,58 +14,30 @@
 
 <section class="page-section">
     <div class="container">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
+        {% if buscar %}
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Endereço de Origem</th>
+                            <th>Endereço de Destino</th>
+                            <th>Status</th>
+                            <th>Data de solicitação</th>
+                            <th>Data prevista para entrega</th>
+                            <th class="actions-column">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ entrega.endereco_origem }}</td>
+                            <td>{{ entrega.endereco_destino }}</td>
+                            <td>{{ entrega.status }}</td>
+                            <td>{{ entrega.data_solicitacao }}</td>
+                            <td>{{ entrega.data_entrega_prevista }}</td>
+                        </tr>
+        {% else %}
+            <p>Nenhum pacote encontrado.</p>
         {% endif %}
-
-        <div class="table-container">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Endereço de Origem</th>
-                        <th>Endereço de Destino</th>
-                        <th>Status</th>
-                        <th>Data de solicitação</th>
-                        <th>Data prevista para entrega</th>
-                        <th class="actions-column">Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>#{{ entrega.endereco_origem }}</td>
-                        <td>{{ entrega.endereco_destino }}</td>
-                        <td>{{ entrega.status }}</td>
-                        <td>{{ entrega.data_solicitacao }}</td>
-                        <td>{{ entrega.data_entrega_prevista }}</td>
-                        <td>
-                            <div class="action-buttons">
-                                <a href="{% url 'atualizar_entrega' entrega.id %}"
-                                   class="btn-action btn-edit"
-                                   title="Editar">
-                                    ✏️ Editar
-                                </a>
-                                <a href="{% url 'deletar_entrega' entrega.id %}"
-                                   class="btn-action btn-delete"
-                                   title="Deletar"
-                                   onclick="return confirm('Tem certeza que deseja deletar este entrega?')">
-                                    🗑️ Deletar
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="empty-state">
-                            <div class="empty-icon">📋</div>
-                            <p>Nenhum entrega cadastrado</p>
-                            <a href="{% url 'criar_entrega' %}" class="btn-primary">Cadastrar Primeira Entrega</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
                 </tbody>
             </table>
         </div>

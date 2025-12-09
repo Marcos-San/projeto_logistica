@@ -6,9 +6,9 @@
 <section class="hero hero-small">
     <div class="container">
         <div class="hero-content">
-            <h1>📦 Entregas</h1>
-            <p>Cadastro e gerenciamento de entregas</p>
-            <a href="{% url 'criar_entrega' %}" class="btn-primary">+ Cadastrar entrega</a>
+            <h1>🚛 Rotas</h1>
+            <p>Registro e gerenciamento de rotas</p>
+            <a href="{% url 'criar_rota' %}" class="btn-primary">+ Registrar Rota</a>
         </div>
     </div>
 </section>
@@ -28,44 +28,41 @@
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Código de Rastreio</th>
-                        <th>Cliente</th>
-                        <th>Destino</th>
-                        <th>CEP</th>
+                        <th>Nome</th>
+                        <th>Descrição</th>
+                        <th>Motorista</th>
+                        <th>Veículo</th>
+                        <th>Data de inicio</th>
                         <th>Status</th>
-                        <th>Capacidade</th>
-                        <th>Data da Solicitação</th>
-                        <th>Data Prevista para entrega</th>
-                        <th>Data real da entrega</th>
-                        <th>Observações</th>
+                        <th>KM total</th>
+                        <th>Tempo estimado da rota</th>
                         <th class="actions-column">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for entrega in entregas %}
+                    {% for rota in rotas %}
                     <tr>
-                        <td>#{{ entrega.id }}</td>
-                        <td>{{ entrega.codigo_rastreio }}</td>
-                        <td>#{{ entrega.cliente }}</td>
-                        <td>{{ entrega.endereco_destino }}</td>
-                        <td>{{ entrega.cep_destino }}</td>
-                        <td>{{ entrega.status }}</td>
-                        <td>{{ entrega.capacidade_necessaria }}</td>
-                        <td>{{ entrega.data_solicitacao }}</td>
-                         <td>{{ entrega.data_entrega_prevista }}</td>
-                        <td>{{ entrega.data_entrega_real }}</td>
-                        <td>{{ entrega.data_obs }}</td>
+                        <td>#{{ rota.id }}</td>
+                        <td>{{ rota.nome }}</td>
+                        <td>{{ rota.descricao }}</td>
+                        <td>{{ rota.motorista }}</td>
+                        <td>{{ rota.veiculo }}</td>
+                        <td>{{ rota.data_rota }}</td>
+                        <td>{{ rota.status }}</td>
+                        <td>{{ rota.capacidade_total_utilizada }}</td>
+                        <td>{{ rota.km_total_estimado }}</td>
+                        <td>{{ rota.tempo_estimado }}</td>
                         <td>
                             <div class="action-buttons">
-                                <a href="{% url 'atualizar_entrega' entrega.id %}"
+                                <a href="{% url 'atualizar_rota' rota.id %}"
                                    class="btn-action btn-edit"
                                    title="Editar">
                                     ✏️ Editar
                                 </a>
-                                <a href="{% url 'deletar_entrega' entrega.id %}"
+                                <a href="{% url 'deletar_rota' rota.id %}"
                                    class="btn-action btn-delete"
                                    title="Deletar"
-                                   onclick="return confirm('Tem certeza que deseja deletar essa entrega?')">
+                                   onclick="return confirm('Tem certeza que deseja deletar esta rota?')">
                                     🗑️ Deletar
                                 </a>
                             </div>
@@ -75,8 +72,8 @@
                     <tr>
                         <td colspan="5" class="empty-state">
                             <div class="empty-icon">📋</div>
-                            <p>Nenhuma entrega cadastrada</p>
-                            <a href="{% url 'criar_entrega' %}" class="btn-primary">Cadastrar Primeira Entrega</a>
+                            <p>Nenhuma rota cadastrada</p>
+                            <a href="{% url 'criar_rota' %}" class="btn-primary">Registrar Primeira Rota</a>
                         </td>
                     </tr>
                     {% endfor %}

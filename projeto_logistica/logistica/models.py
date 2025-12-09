@@ -3,7 +3,7 @@ from importlib.metadata import requires
 from django.db import models
 
 class Cliente(models.Model):
-    nome = models.CharField(max_length=100)
+    nome = models.CharField(max_length=100, default="Nome")
     email = models.EmailField(default='teste@example.com')
     telefone = models.CharField(max_length=100)
 
@@ -98,7 +98,7 @@ class Rota(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_ROTA, default='planejada')
     capacidade_total_utilizada = models.FloatField()
     km_total_estimado = models.IntegerField()
-    tempo_estimado = models.DateField()
+    tempo_estimado = models.FloatField()
 
     def __str__(self):
         return self.nome

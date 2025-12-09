@@ -256,3 +256,57 @@ def deletar_entrega(request, id):
     entrega.delete()
     messages.success(request, 'Entrega deletado com sucesso!')
     return redirect('list_entrega')
+
+
+
+# ========== CRUD ROTA ==========
+@login_required()
+def list_rota(request):
+    rotas = Rota.objects.all()
+    return render(request, 'log/list_rota.html', {'rotas': rotas})
+
+@login_required()
+def criar_rota(request):
+    if request.method == 'GET':
+        form = RotaForm()
+        context = {
+            'form' : form
+        }
+        return render(request, 'log/criar_rota.html', context)
+    else:
+        form = RotaForm(request.POST)
+        if form.is_valid():
+            form.save()
+
+        context = {
+            messages.success(request, 'Rota registrada com sucesso!')
+        }
+
+        return redirect('list_rota')
+
+
+@login_required()
+def atualizar_rota(request, id):
+    rota = get_object_or_404(Rota, id=id)
+
+    if request.method == 'POST':
+        form = RotaForm(request.POST, instance=rota)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Dados atualizados com sucesso!')
+            return redirect('list_rota')
+    else:
+        form = RotaForm(instance=rota)
+
+    context = {
+        'form': form
+    }
+    return render(request, 'log/atualizar_rota.html', context)
+
+@login_required()
+def deletar_rota(request, id):
+    rota = get_object_or_404(Rota, id=id)
+    rota.delete()
+    messages.success(request, 'Rota deletado com sucesso!')
+    return redirect('list_rota')

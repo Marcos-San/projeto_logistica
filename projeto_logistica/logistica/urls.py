@@ -37,4 +37,9 @@ urlpatterns = [
     path('criar_entrega/', views.criar_entrega, name='criar_entrega'),
     path('deletar_entrega/<int:id>', views.deletar_entrega, name='deletar_entrega'),
     path('atualizar_entrega/<int:id>', views.atualizar_entrega, name='atualizar_entrega'),
+
+    path('list_rota/', views.list_rota, name='list_rota'),
+    path('criar_rota/', views.criar_rota, name='criar_rota'),
+    path('deletar/<int:id>', views.deletar_rota, name='deletar_rota'),
+    path('atualizar_rota/<int:id>', views.atualizar_rota, name='atualizar_rota'),
 ]

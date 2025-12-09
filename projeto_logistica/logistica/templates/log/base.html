@@ -17,6 +17,7 @@
                 <li><a href="{% url 'home' %}" class="nav-link">Início</a></li>
                 {% if user.is_authenticated %}
                     <li><a href="{% url 'list_entrega' %}" class="nav-link">Entregas</a></li>
+                    <li><a href="{% url 'list_rota' %}" class="nav-link">Rotas</a></li>
                     <li><a href="{% url 'list_motorista' %}" class="nav-link">Motoristas</a></li>
                     <li><a href="{% url 'list_veiculo' %}" class="nav-link">Veículos</a></li>
                     <li><a href="{% url 'list_cliente' %}" class="nav-link">Clientes</a></li>

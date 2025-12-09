@@ -7,14 +7,17 @@
     <div class="container">
         <div class="hero-content">
             <h1>🚛 Andamento e Historico</h1>
-            <p>{{ entrega.codigo_rastreio }}</p>
+            {% if resultado %}
+                <p>Você buscou por: <b>{{ dados }}</b></p>
+            {% endif %}
         </div>
     </div>
 </section>
 
 <section class="page-section">
     <div class="container">
-        {% if buscar %}
+        {% if resultado %}
+        <p>Você buscou por: <b>{{ resultado.codigo_rastreio }}</b></p>
             <div class="table-container">
                 <table class="data-table">
                     <thead>
@@ -24,20 +27,20 @@
                             <th>Status</th>
                             <th>Data de solicitação</th>
                             <th>Data prevista para entrega</th>
-                            <th class="actions-column">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td>{{ entrega.endereco_origem }}</td>
-                            <td>{{ entrega.endereco_destino }}</td>
-                            <td>{{ entrega.status }}</td>
-                            <td>{{ entrega.data_solicitacao }}</td>
-                            <td>{{ entrega.data_entrega_prevista }}</td>
+                            <td>{{ resultado.endereco_origem }}</td>
+                            <td>{{ resultado.endereco_destino }}</td>
+                            <td>{{ resultado.status }}</td>
+                            <td>{{ resultado.data_solicitacao }}</td>
+                            <td>{{ resultado.data_entrega_prevista }}</td>
                         </tr>
         {% else %}
-            <p>Nenhum pacote encontrado.</p>
+            <p>Nenhum entrega encontrada.</p>
         {% endif %}
+                         <a href="{% url 'home' %}" class="btn-action btn-edit">Nova busca</a>
                 </tbody>
             </table>
         </div>

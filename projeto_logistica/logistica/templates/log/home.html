@@ -9,9 +9,9 @@
             <h1>Bem-vindo ao LogiTrans</h1>
             <p>Rastrear entrega</p>
             <div class="search-box">
-            <form action="{% url 'buscar_entrega' %}" method="get" enctype="multipart/form-data" class="form-styled">
+            <form action="{% url 'buscar_entrega'%}" method="get" enctype="multipart/form-data" class="form-styled">
                 <div class="form-actions">
-                    <input type="text" name="buscar" class="search-input" placeholder="Digite o código de rastreamento">
+                    <input type="text" name="pesquisa" class="search-input" placeholder="Digite o código de rastreamento">
                     <button type="submit" class="btn-submit"> Consultar </button>
                 </div>
             </form>

@@ -16,10 +16,19 @@ def custom_logout(request):
     return redirect('home')
 
 def buscar_entrega(request):
-    buscar = request.GET.get('buscar')
-    if buscar == Entrega.codigo_rastreio:
-        resultado = Entrega.objects.filter(codigo_rastreio=buscar)
-    return render(request, 'log/buscar_entrega.html', {'buscar': buscar})
+    buscar = request.GET.get('pesquisa')
+
+    if buscar:
+        try:
+            resultado = Entrega.objects.get(codigo_rastreio=buscar)
+        except (ValueError, Entrega.DoesNotExist):
+            resultado = None
+        context = {
+            'resultado': resultado,
+            'buscar': buscar,
+        }
+
+    return render(request, 'log/buscar_entrega.html', context)
 
 
 

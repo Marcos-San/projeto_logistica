@@ -266,6 +266,20 @@ def list_rota(request):
     return render(request, 'log/list_rota.html', {'rotas': rotas})
 
 @login_required()
+def lista_entregas(request, rota_id):
+    numero = get_object_or_404(Rota, id=rota_id)
+    try:
+        entregas = Entrega.objects.filter(rota=numero)
+    except (ValueError, Entrega.DoesNotExist):
+        entregas = None
+    context = {
+        'entregas': entregas,
+        'numero': numero,
+    }
+
+    return render(request, 'log/lista_entregas.html', context)
+
+@login_required()
 def criar_rota(request):
     if request.method == 'GET':
         form = RotaForm()
@@ -276,7 +290,14 @@ def criar_rota(request):
     else:
         form = RotaForm(request.POST)
         if form.is_valid():
-            form.save()
+            rota = form.save()
+
+            veiculo = rota.veiculo
+            veiculo.status = "em_uso"
+            veiculo.save()
+            motorista = rota.motorista
+            motorista.status = "em_rota"
+            motorista.save()
 
         context = {
             messages.success(request, 'Rota registrada com sucesso!')
@@ -294,6 +315,13 @@ def atualizar_rota(request, id):
 
         if form.is_valid():
             form.save()
+
+            if rota.status == "concluida":
+                rota.veiculo.status = "disponivel"
+                rota.veiculo.save()
+                rota.motorista.status = "disponivel"
+                rota.motorista.save()
+
             messages.success(request, 'Dados atualizados com sucesso!')
             return redirect('list_rota')
     else:

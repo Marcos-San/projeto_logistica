@@ -6,9 +6,8 @@
 <section class="hero hero-small">
     <div class="container">
         <div class="hero-content">
-            <h1>📦 Entregas</h1>
-            <p>Cadastro e gerenciamento de entregas</p>
-            <a href="{% url 'criar_entrega' %}" class="btn-primary">+ Cadastrar entrega</a>
+            <h1>📦 Entregas da Rota</h1>
+            <a href="{% url 'list_rota' %}" class="btn-secondary">← Voltar</a>
         </div>
     </div>
 </section>
@@ -57,29 +56,6 @@
                         <td>{{ entrega.data_entrega_real }}</td>
                         <td>{{ entrega.obs }}</td>
                         <td>{{ entrega.rota }}</td>
-                        <td>
-                            <div class="action-buttons">
-                                <a href="{% url 'atualizar_entrega' entrega.id %}"
-                                   class="btn-action btn-edit"
-                                   title="Editar">
-                                    ✏️ Editar
-                                </a>
-                                <a href="{% url 'deletar_entrega' entrega.id %}"
-                                   class="btn-action btn-delete"
-                                   title="Deletar"
-                                   onclick="return confirm('Tem certeza que deseja deletar essa entrega?')">
-                                    🗑️ Deletar
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="empty-state">
-                            <div class="empty-icon">📋</div>
-                            <p>Nenhuma entrega cadastrada</p>
-                            <a href="{% url 'criar_entrega' %}" class="btn-primary">Cadastrar Primeira Entrega</a>
-                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

@@ -42,4 +42,5 @@ urlpatterns = [
     path('criar_rota/', views.criar_rota, name='criar_rota'),
     path('deletar/<int:id>', views.deletar_rota, name='deletar_rota'),
     path('atualizar_rota/<int:id>', views.atualizar_rota, name='atualizar_rota'),
+    path('lista_entregas/<int:rota_id>', views.lista_entregas, name='lista_entregas'),
 ]

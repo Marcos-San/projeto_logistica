@@ -34,6 +34,7 @@
                         <th>Veículo</th>
                         <th>Data de inicio</th>
                         <th>Status</th>
+                        <th>Capacidade Total</th>
                         <th>KM total</th>
                         <th>Tempo estimado da rota</th>
                         <th class="actions-column">Ações</th>
@@ -51,9 +52,14 @@
                         <td>{{ rota.status }}</td>
                         <td>{{ rota.capacidade_total_utilizada }}</td>
                         <td>{{ rota.km_total_estimado }}</td>
-                        <td>{{ rota.tempo_estimado }}</td>
+                        <td>{{ rota.tempo_estimado }} h</td>
                         <td>
                             <div class="action-buttons">
+                                <a href="{% url 'lista_entregas' rota.id %}"
+                                   class="btn-action btn-edit"
+                                   title="Editar">
+                                    📦 Detalhes da Rota
+                                </a>
                                 <a href="{% url 'atualizar_rota' rota.id %}"
                                    class="btn-action btn-edit"
                                    title="Editar">

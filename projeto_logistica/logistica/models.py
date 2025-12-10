@@ -10,31 +10,7 @@ class Cliente(models.Model):
     def __str__(self):
         return self.nome
 
-class Entrega(models.Model):
-    STATUS_ENTREGA = [
-        ('pendente', 'Pendente'),
-        ('em_transito', 'Em trânsito'),
-        ('entregue', 'Entregue'),
-        ('cancelada', 'Cancelada'),
-        ('remarcada', 'Remarcada'),
-    ]
 
-    codigo_rastreio = models.IntegerField(unique=True)
-    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
-    endereco_origem = models.CharField(max_length=100)
-    cep_origem = models.CharField(max_length=100)
-    endereco_destino = models.CharField(max_length=100)
-    cep_destino = models.CharField(max_length=8)
-    status = models.CharField(max_length=100, choices=STATUS_ENTREGA, default='pendente')
-    capacidade_necessaria = models.FloatField()
-    valor_frete = models.FloatField()
-    data_solicitacao = models.DateField()
-    data_entrega_prevista = models.DateField()
-    data_entrega_real = models.DateField(null=True, blank=True)
-    obs = models.TextField()
-
-    def __str__(self):
-        return str(self.codigo_rastreio)
 
 class Motorista(models.Model):
     STATUS_MOTORISTA = [
@@ -91,7 +67,6 @@ class Rota(models.Model):
     ]
     nome = models.CharField(max_length=100)
     descricao = models.TextField()
-    entrega = models.ForeignKey(Entrega, on_delete=models.CASCADE)
     motorista = models.ForeignKey(Motorista, on_delete=models.CASCADE)
     veiculo = models.ForeignKey(Veiculo, on_delete=models.CASCADE)
     data_rota = models.DateField()
@@ -103,3 +78,30 @@ class Rota(models.Model):
     def __str__(self):
         return self.nome
 
+
+class Entrega(models.Model):
+    STATUS_ENTREGA = [
+        ('pendente', 'Pendente'),
+        ('em_transito', 'Em trânsito'),
+        ('entregue', 'Entregue'),
+        ('cancelada', 'Cancelada'),
+        ('remarcada', 'Remarcada'),
+    ]
+
+    codigo_rastreio = models.IntegerField(unique=True)
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
+    endereco_origem = models.CharField(max_length=100)
+    cep_origem = models.CharField(max_length=100)
+    endereco_destino = models.CharField(max_length=100)
+    cep_destino = models.CharField(max_length=8)
+    status = models.CharField(max_length=100, choices=STATUS_ENTREGA, default='pendente')
+    capacidade_necessaria = models.FloatField()
+    valor_frete = models.FloatField()
+    data_solicitacao = models.DateField()
+    data_entrega_prevista = models.DateField()
+    data_entrega_real = models.DateField(null=True, blank=True)
+    obs = models.TextField()
+    rota = models.ForeignKey(Rota, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return str(self.codigo_rastreio)

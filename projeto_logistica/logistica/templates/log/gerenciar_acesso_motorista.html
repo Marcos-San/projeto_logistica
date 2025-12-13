@@ -1,0 +1,149 @@
+{% extends 'log/base.html' %}
+
+{% block title %}Gerenciar Acesso - {{ motorista.nome }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>🔐 Gerenciar Acesso: {{ motorista.nome }}</h1>
+        <div>
+            <a href="{% url 'detalhes_motorista' motorista.id %}" class="btn btn-secondary">
+                <i class="bi bi-person"></i> Ver Perfil
+            </a>
+            <a href="{% url 'list_motorista' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+    
+    <!-- Status do Acesso -->
+    <div class="card mb-4">
+        <div class="card-header {% if motorista.user %}bg-info{% else %}bg-warning{% endif %} text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-{% if motorista.user %}shield-check{% else %}shield-exclamation{% endif %}"></i>
+                Status do Acesso
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if motorista.user %}
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="info-box">
+                        <h6>Usuário</h6>
+                        <p class="h4">{{ motorista.user.username }}</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="info-box">
+                        <h6>Status</h6>
+                        <p>
+                            {% if motorista.user.is_active %}
+                            <span class="badge bg-success p-2">Ativo</span>
+                            {% else %}
+                            <span class="badge bg-danger p-2">Bloqueado</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="info-box">
+                        <h6>Último Login</h6>
+                        <p>
+                            {% if motorista.user.last_login %}
+                                {{ motorista.user.last_login|date:"d/m/Y H:i" }}
+                            {% else %}
+                                <span class="text-muted">Nunca</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="bi bi-person-x display-1 text-warning mb-3"></i>
+                <h4>Motorista sem acesso ao sistema</h4>
+                <p class="text-muted">Este motorista ainda não possui um usuário para acessar o sistema.</p>
+                <a href="{% url 'criar_usuario_motorista' motorista.id %}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-person-plus"></i> Criar Usuário
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if motorista.user %}
+    <!-- Ações de Gerenciamento -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-tools"></i> Ações de Gerenciamento</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" class="form-styled">
+                {% csrf_token %}
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.acao.id_for_label }}">{{ form.acao.label }}</label>
+                        {{ form.acao }}
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.email_credenciais.id_for_label }}">{{ form.email_credenciais.label }}</label>
+                        {{ form.email_credenciais }}
+                        <small class="form-text text-muted">{{ form.email_credenciais.help_text }}</small>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Atenção:</strong> As ações de resetar senha e reenviar credenciais gerarão uma nova senha.
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Executar Ação
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Histórico de Ações (simulado) -->
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0"><i class="bi bi-clock-history"></i> Últimas Ações</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Data/Hora</th>
+                            <th>Ação</th>
+                            <th>Executado por</th>
+                            <th>Detalhes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ motorista.user.date_joined|date:"d/m/Y H:i" }}</td>
+                            <td><span class="badge bg-success">Usuário criado</span></td>
+                            <td>Sistema</td>
+                            <td>Usuário criado automaticamente</td>
+                        </tr>
+                        {% if motorista.user.last_login %}
+                        <tr>
+                            <td>{{ motorista.user.last_login|date:"d/m/Y H:i" }}</td>
+                            <td><span class="badge bg-info">Último acesso</span></td>
+                            <td>{{ motorista.nome }}</td>
+                            <td>Login realizado com sucesso</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

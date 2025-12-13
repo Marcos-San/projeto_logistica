@@ -16,15 +16,29 @@
             <ul class="nav-menu">
                 <li><a href="{% url 'home' %}" class="nav-link">Início</a></li>
                 {% if user.is_authenticated %}
-                    <li><a href="{% url 'list_entrega' %}" class="nav-link">Entregas</a></li>
-                    <li><a href="{% url 'list_rota' %}" class="nav-link">Rotas</a></li>
-                    <li><a href="{% url 'list_motorista' %}" class="nav-link">Motoristas</a></li>
-                    <li><a href="{% url 'list_veiculo' %}" class="nav-link">Veículos</a></li>
-                    <li><a href="{% url 'list_cliente' %}" class="nav-link">Clientes</a></li>
-                    <li class="user-info">
-                        <span>Olá, {{ user.username }}</span>
-                        <a href="{% url 'logout' %}" class="btn-logout">Sair</a>
-                    </li>
+                    {% if user.is_staff %}
+                        <li><a href="{% url 'list_entrega' %}" class="nav-link">Entregas</a></li>
+                        <li><a href="{% url 'list_rota' %}" class="nav-link">Rotas</a></li>
+                        <li><a href="{% url 'list_motorista' %}" class="nav-link">Motoristas</a></li>
+                        <li><a href="{% url 'list_veiculo' %}" class="nav-link">Veículos</a></li>
+                        <li><a href="{% url 'list_cliente' %}" class="nav-link">Clientes</a></li>
+
+                    {% elif is.motorista %}
+                        <li><a href="{% url 'list_entrega' %}" class="nav-link">Minhas Entregas</a></li>
+                        <li><a href="{% url 'list_rota' %}" class="nav-link">Minhas Rotas</a></li>
+                    {% else %}
+                        <li><a href="{% url 'buscar_entrega' %}" class="nav-link">Rastrear Entrega</a></li>
+                    {% endif %}
+                        <li class="user-info">
+                            <span>Olá, {{ user.username }}
+                                {% if user.is_admin %}(Admin){% elif is.motorista %}(Motorista){% endif %}
+                            </span>
+                            <!-- Link para perfil do motorista -->
+                            {% if is_motorista and user_motorista %}
+                                <a href="{% url 'atualizar_motorista' user_motorista.id %}" class="btn-profile">Meu Perfil</a>
+                            {% endif %}
+                            <a href="{% url 'logout' %}" class="btn-logout">Sair</a>
+                        </li>
                 {% else %}
                     <li><a href="{% url 'login' %}" class="btn-login">Entrar</a></li>
                 {% endif %}

@@ -1,17 +1,99 @@
 {% extends 'log/base.html' %}
 
-{% block title %}Lista de Veículos - Sistema de Logística{% endblock %}
+{% block title %}Entregas da Rota: {{ rota.nome }} - Sistema de Logística{% endblock %}
 
 {% block content %}
 <section class="hero hero-small">
     <div class="container">
         <div class="hero-content">
-            <h1>📦 Entregas da Rota</h1>
-            <a href="{% url 'list_rota' %}" class="btn-secondary">← Voltar</a>
+            <h1>🗺️ {{ rota.nome }}</h1>
+            <p>{{ rota.descricao|default:"Detalhes da rota e entregas" }}</p>
+            <a href="{% url 'list_rota' %}" class="btn-secondary">← Voltar para Rotas</a>
         </div>
     </div>
 </section>
 
+<!-- Informações da Rota -->
+<section class="page-section">
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>{{ total_entregas|default:0 }}</h3>
+                <p>Total de Entregas</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ capacidade_utilizada|default:0 }} kg</h3>
+                <p>Capacidade Utilizada</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ capacidade_disponivel|default:0 }} kg</h3>
+                <p>Capacidade Disponível</p>
+            </div>
+            <div class="stat-card">
+                <h3>R$ {{ valor_total|default:0|floatformat:2 }}</h3>
+                <p>Valor Total</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Informações Detalhadas -->
+<section class="page-section">
+    <div class="container">
+        <div class="form-card">
+            <h2>📋 Informações da Rota</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
+                <div>
+                    <strong>Motorista:</strong>
+                    <p>{{ rota.motorista.nome }}</p>
+                </div>
+                <div>
+                    <strong>Veículo:</strong>
+                    <p>{{ rota.veiculo.placa }} - {{ rota.veiculo.modelo }}</p>
+                </div>
+                <div>
+                    <strong>Capacidade do Veículo:</strong>
+                    <p>{{ rota.veiculo.capacidade_maxima }} kg</p>
+                </div>
+                <div>
+                    <strong>Data da Rota:</strong>
+                    <p>{{ rota.data_rota|date:"d/m/Y" }}</p>
+                </div>
+                <div>
+                    <strong>Status:</strong>
+                    <p>
+                        {% if rota.status == 'planejada' %}
+                            <span class="badge badge-secondary">Planejada</span>
+                        {% elif rota.status == 'em_andamento' %}
+                            <span class="badge badge-info">Em Andamento</span>
+                        {% elif rota.status == 'concluida' %}
+                            <span class="badge badge-success">Concluída</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <strong>KM Estimado:</strong>
+                    <p>{{ rota.km_total_estimado }} km</p>
+                </div>
+                <div>
+                    <strong>Tempo Estimado:</strong>
+                    <p>{{ rota.tempo_estimado }} min</p>
+                </div>
+                <div>
+                    <strong>Percentual Utilizado:</strong>
+                    <p>
+                        {% widthratio capacidade_utilizada rota.veiculo.capacidade_maxima 100 %}%
+                        <div style="background: #e0e0e0; height: 10px; border-radius: 5px; margin-top: 5px;">
+                            <div style="background: #2563eb; height: 10px; border-radius: 5px; width: {% widthratio capacidade_utilizada rota.veiculo.capacidade_maxima 100 %}%;"></div>
+                        </div>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Mensagens -->
 <section class="page-section">
     <div class="container">
         {% if messages %}
@@ -21,23 +103,81 @@
                 </div>
             {% endfor %}
         {% endif %}
+    </div>
+</section>
 
+<!-- Adicionar Entrega à Rota -->
+{% if entregas_disponiveis and rota.status != 'concluida' %}
+<section class="page-section">
+    <div class="container">
+        <div class="form-card">
+            <h2>➕ Adicionar Entrega à Rota</h2>
+            <form method="post" action="{% url 'adicionar_entrega_rota' rota.id %}" class="form-styled">
+                {% csrf_token %}
+                <div style="display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: end;">
+                    <div class="form-group">
+                        <label for="entrega_id" class="form-label">Selecione uma entrega disponível:</label>
+                        <select name="entrega_id" id="entrega_id" class="form-control" required>
+                            <option value="">Escolha uma entrega...</option>
+                            {% for entrega in entregas_disponiveis %}
+                                <option value="{{ entrega.id }}" data-capacidade="{{ entrega.capacidade_necessaria }}">
+                                    {{ entrega.codigo_rastreio }} - {{ entrega.cliente.nome }}
+                                    ({{ entrega.capacidade_necessaria }} kg) -
+                                    De: {{ entrega.endereco_origem|truncatewords:3 }}
+                                    Para: {{ entrega.endereco_destino|truncatewords:3 }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <small style="color: #666; margin-top: 0.5rem; display: block;">
+                            💡 Apenas entregas sem rota e com status "pendente" aparecem aqui.
+                        </small>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        ➕ Adicionar à Rota
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% elif rota.status == 'concluida' %}
+<section class="page-section">
+    <div class="container">
+        <div class="alert alert-info">
+            ℹ️ Esta rota está concluída. Não é possível adicionar mais entregas.
+        </div>
+    </div>
+</section>
+{% else %}
+<section class="page-section">
+    <div class="container">
+        <div class="alert alert-warning">
+            ℹ️ Não há entregas disponíveis para adicionar. Todas as entregas pendentes já estão em rotas.
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Lista de Entregas da Rota -->
+<section class="page-section">
+    <div class="container">
+        <h2>📦 Entregas nesta Rota</h2>
         <div class="table-container">
             <table class="data-table">
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Código de Rastreio</th>
+                        <th>Código</th>
                         <th>Cliente</th>
+                        <th>Origem</th>
                         <th>Destino</th>
-                        <th>CEP</th>
+                        <th>CEP Destino</th>
                         <th>Status</th>
                         <th>Capacidade</th>
-                        <th>Data da Solicitação</th>
-                        <th>Data Prevista para entrega</th>
-                        <th>Data real da entrega</th>
+                        <th>Valor</th>
+                        <th>Data Solicitação</th>
+                        <th>Data Prevista</th>
                         <th>Observações</th>
-                        <th>Rota</th>
                         <th class="actions-column">Ações</th>
                     </tr>
                 </thead>
@@ -45,17 +185,58 @@
                     {% for entrega in entregas %}
                     <tr>
                         <td>#{{ entrega.id }}</td>
-                        <td>{{ entrega.codigo_rastreio }}</td>
-                        <td>#{{ entrega.cliente }}</td>
-                        <td>{{ entrega.endereco_destino }}</td>
+                        <td><strong>{{ entrega.codigo_rastreio }}</strong></td>
+                        <td>{{ entrega.cliente.nome }}</td>
+                        <td>{{ entrega.endereco_origem|truncatewords:3 }}</td>
+                        <td>{{ entrega.endereco_destino|truncatewords:3 }}</td>
                         <td>{{ entrega.cep_destino }}</td>
-                        <td>{{ entrega.status }}</td>
-                        <td>{{ entrega.capacidade_necessaria }}</td>
-                        <td>{{ entrega.data_solicitacao }}</td>
-                         <td>{{ entrega.data_entrega_prevista }}</td>
-                        <td>{{ entrega.data_entrega_real }}</td>
-                        <td>{{ entrega.obs }}</td>
-                        <td>{{ entrega.rota }}</td>
+                        <td>
+                            {% if entrega.status == 'pendente' %}
+                                <span class="badge badge-warning">Pendente</span>
+                            {% elif entrega.status == 'em_transito' %}
+                                <span class="badge badge-info">Em Trânsito</span>
+                            {% elif entrega.status == 'entregue' %}
+                                <span class="badge badge-success">Entregue</span>
+                            {% elif entrega.status == 'cancelada' %}
+                                <span class="badge badge-danger">Cancelada</span>
+                            {% else %}
+                                <span class="badge">{{ entrega.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ entrega.capacidade_necessaria }} kg</td>
+                        <td>R$ {{ entrega.valor_frete }}</td>
+                        <td>{{ entrega.data_solicitacao|date:"d/m/Y" }}</td>
+                        <td>{{ entrega.data_entrega_prevista|date:"d/m/Y"|default:"-" }}</td>
+                        <td>{{ entrega.obs|truncatewords:5|default:"-" }}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'atualizar_entrega' entrega.id %}"
+                                   class="btn-action btn-edit"
+                                   title="Editar">
+                                    ✏️ Editar
+                                </a>
+                                {% if rota.status != 'concluida' %}
+                                <a href="{% url 'remover_entrega_rota' entrega.id %}"
+                                   class="btn-action btn-delete"
+                                   title="Remover da Rota"
+                                   onclick="return confirm('Remover esta entrega da rota?')">
+                                    🗑️ Remover
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="13" class="empty-state">
+                            <div class="empty-icon">📋</div>
+                            <p>Nenhuma entrega nesta rota ainda</p>
+                            {% if entregas_disponiveis and rota.status != 'concluida' %}
+                                <p style="font-size: 0.875rem; color: #666; margin-top: 0.5rem;">
+                                    Use o formulário acima para adicionar entregas
+                                </p>
+                            {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -63,5 +244,31 @@
         </div>
     </div>
 </section>
+
+<!-- Validação JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form[action*="adicionar-entrega"]');
+    if (form) {
+        const select = form.querySelector('select[name="entrega_id"]');
+        const capacidadeDisponivel = {{ capacidade_disponivel|default:0 }};
+
+        form.addEventListener('submit', function(e) {
+            const selectedOption = select.options[select.selectedIndex];
+            if (selectedOption && selectedOption.value) {
+                const capacidadeEntrega = parseFloat(selectedOption.getAttribute('data-capacidade') || 0);
+
+                if (capacidadeEntrega > capacidadeDisponivel) {
+                    e.preventDefault();
+                    alert('⚠️ Capacidade insuficiente!\n\n' +
+                          'Capacidade da entrega: ' + capacidadeEntrega + ' kg\n' +
+                          'Capacidade disponível na rota: ' + capacidadeDisponivel + ' kg\n\n' +
+                          'Por favor, escolha outra entrega ou libere espaço na rota.');
+                }
+            }
+        });
+    }
+});
+</script>
 
 {% endblock %}

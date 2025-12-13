@@ -1,37 +1,153 @@
 {% extends 'log/base.html' %}
-{% load crispy_forms_tags %}
 
-{% block title %}Cadastrar Motorista - Sistema de Logística{% endblock %}
+{% block title %}Cadastrar Motorista{% endblock %}
 
 {% block content %}
-<section class="page-section">
-    <div class="container">
-        <div class="page-header">
-            <h1>👨‍💼 Cadastrar Novo Motorista</h1>
-            <a href="{% url 'list_motorista' %}" class="btn-secondary">← Voltar</a>
-        </div>
+<div class="container">
+    <h1>📝 Cadastrar Novo Motorista</h1>
 
-        <div class="form-card">
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
+    {% if senha_gerada %}
+    <div class="alert alert-success alert-dismissible fade show">
+        <h4>✅ Credenciais Geradas com Sucesso!</h4>
+        <p><strong>Usuário:</strong> <code>{{ form.instance.user.username }}</code></p>
+        <p><strong>Senha Inicial:</strong> <code>{{ senha_gerada }}</code></p>
+        <p><small class="text-muted">
+            <i class="bi bi-info-circle"></i> Anote estas credenciais! O motorista deve alterar a senha no primeiro acesso.
+        </small></p>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
 
-            <form method="post" enctype="multipart/form-data" class="form-styled">
+    <div class="card">
+        <div class="card-body">
+            <form method="post" class="form-styled">
                 {% csrf_token %}
-                {{ form|crispy }}
 
-                <div class="form-actions">
-                    <button type="submit" class="btn-submit">
-                        <span>✓</span> Salvar Motorista
+                <h5 class="card-title mb-4">📋 Informações Pessoais</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.nome.id_for_label }}">{{ form.nome.label }} *</label>
+                        {{ form.nome }}
+                        {% if form.nome.errors %}
+                        <div class="text-danger">{{ form.nome.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.cpf.id_for_label }}">{{ form.cpf.label }} *</label>
+                        {{ form.cpf }}
+                        <small class="form-text text-muted">Será usado como nome de usuário</small>
+                        {% if form.cpf.errors %}
+                        <div class="text-danger">{{ form.cpf.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.cnh.id_for_label }}">{{ form.cnh.label }} *</label>
+                        {{ form.cnh }}
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.telefone.id_for_label }}">{{ form.telefone.label }} *</label>
+                        {{ form.telefone }}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
+                        {{ form.status }}
+                    </div>
+
+                    <!-- Campo de informação da data de cadastro (apenas na edição) -->
+                    {% if form.info_data_cadastro %}
+                    <div class="col-md-6 mb-3">
+                        {{ form.info_data_cadastro.label_tag }}
+                        {{ form.info_data_cadastro }}
+                        <small class="form-text text-muted">Data gerada automaticamente</small>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <hr class="my-4">
+
+                <h5 class="card-title mb-4">🔐 Acesso ao Sistema</h5>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check form-switch">
+                            {{ form.criar_usuario }}
+                            <label class="form-check-label" for="{{ form.criar_usuario.id_for_label }}">
+                                {{ form.criar_usuario.label }}
+                            </label>
+                        </div>
+                        <small class="form-text text-muted">{{ form.criar_usuario.help_text }}</small>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                        {{ form.email }}
+                        <small class="form-text text-muted">{{ form.email.help_text }}</small>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Informação:</strong>
+                    <ul class="mb-0">
+                        <li>As credenciais serão geradas automaticamente após o cadastro</li>
+                        <li>A data de cadastro será preenchida automaticamente com a data atual</li>
+                        <li>O CPF será usado como nome de usuário</li>
+                    </ul>
+                </div>
+
+                <div class="form-actions mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-person-plus"></i> Cadastrar Motorista
                     </button>
-                    <a href="{% url 'list_motorista' %}" class="btn-cancel">Cancelar</a>
+                    <a href="{% url 'list_motorista' %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </a>
                 </div>
             </form>
         </div>
     </div>
-</section>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Máscaras para os campos
+    // CPF
+    const cpfInput = document.getElementById('{{ form.cpf.id_for_label }}');
+    if (cpfInput) {
+        cpfInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 3 && value.length <= 6) {
+                value = value.replace(/(\d{3})(\d+)/, '$1.$2');
+            } else if (value.length > 6 && value.length <= 9) {
+                value = value.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3');
+            } else if (value.length > 9) {
+                value = value.replace(/(\d{3})(\d{3})(\d{3})(\d+)/, '$1.$2.$3-$4');
+            }
+            e.target.value = value;
+        });
+    }
+
+    // Telefone
+    const telefoneInput = document.getElementById('{{ form.telefone.id_for_label }}');
+    if (telefoneInput) {
+        telefoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 2 && value.length <= 7) {
+                value = value.replace(/(\d{2})(\d+)/, '($1) $2');
+            } else if (value.length > 7) {
+                value = value.replace(/(\d{2})(\d{5})(\d+)/, '($1) $2-$3');
+            }
+            e.target.value = value;
+        });
+    }
+});
+</script>
 {% endblock %}

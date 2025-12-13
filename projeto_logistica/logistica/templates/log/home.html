@@ -9,17 +9,16 @@
             <h1>Bem-vindo ao LogiTrans</h1>
             <p>Rastrear entrega</p>
             <div class="search-box">
-            <form action="{% url 'buscar_entrega'%}" method="get" enctype="multipart/form-data" class="form-styled">
-                <div class="form-actions">
-                    <input type="text" name="pesquisa" class="search-input" placeholder="Digite o código de rastreamento">
-                    <button type="submit" class="btn-submit"> Consultar </button>
-                </div>
-            </form>
+                <form action="{% url 'buscar_entrega' %}" method="get" class="form-styled">
+                    <div class="form-actions">
+                        <input type="text" name="pesquisa" class="search-input" placeholder="Digite o código de rastreamento" required>
+                        <button type="submit" class="btn-submit">Consultar</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </section>
-
 
 {% if user.is_authenticated %}
 <section class="features">
@@ -27,24 +26,95 @@
         <h2>Dashboard Rápido</h2>
         <div class="stats-grid">
             <div class="stat-card">
-                <h3>24</h3>
-                <p>Entregas Hoje</p>
+                <h3>{{ total_entregas|default:0 }}</h3>
+                <p>Total de Entregas</p>
             </div>
             <div class="stat-card">
-                <h3>8</h3>
+                <h3>{{ entregas_pendentes|default:0 }}</h3>
+                <p>Pendentes</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ entregas_em_transito|default:0 }}</h3>
                 <p>Em Trânsito</p>
             </div>
             <div class="stat-card">
-                <h3>12</h3>
-                <p>Motoristas Ativos</p>
+                <h3>{{ entregas_entregues|default:0 }}</h3>
+                <p>Entregues</p>
             </div>
             <div class="stat-card">
-                <h3>96%</h3>
-                <p>Taxa de Sucesso</p>
+                <h3>{{ entregas_sem_rota|default:0 }}</h3>
+                <p>Sem Rota</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ motoristas_disponiveis|default:0 }}</h3>
+                <p>Motoristas Disponíveis</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ veiculos_disponiveis|default:0 }}</h3>
+                <p>Veículos Disponíveis</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ rotas_ativas|default:0 }}</h3>
+                <p>Rotas Ativas</p>
             </div>
         </div>
     </div>
 </section>
+
+<!-- Entregas Recentes -->
+{% if entregas_recentes %}
+<section class="page-section">
+    <div class="container">
+        <h2>📦 Últimas Entregas</h2>
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Cliente</th>
+                        <th>Status</th>
+                        <th>Rota</th>
+                        <th>Data Solicitação</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entrega in entregas_recentes %}
+                    <tr>
+                        <td><strong>{{ entrega.codigo_rastreio }}</strong></td>
+                        <td>{{ entrega.cliente.nome }}</td>
+                        <td>
+                            {% if entrega.status == 'pendente' %}
+                                <span class="badge badge-warning">Pendente</span>
+                            {% elif entrega.status == 'em_transito' %}
+                                <span class="badge badge-info">Em Trânsito</span>
+                            {% elif entrega.status == 'entregue' %}
+                                <span class="badge badge-success">Entregue</span>
+                            {% elif entrega.status == 'cancelada' %}
+                                <span class="badge badge-danger">Cancelada</span>
+                            {% else %}
+                                <span class="badge">{{ entrega.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if entrega.rota %}
+                                <a href="{% url 'lista_entregas' entrega.rota.id %}">{{ entrega.rota.nome }}</a>
+                            {% else %}
+                                <span class="badge badge-secondary">Sem rota</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ entrega.data_solicitacao|date:"d/m/Y" }}</td>
+                        <td>
+                            <a href="{% url 'atualizar_entrega' entrega.id %}" class="btn-action btn-edit">Ver</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endif %}
 
 <section class="dashboard-preview">
     <div class="container">
@@ -54,31 +124,37 @@
                 <div class="feature-icon">📦</div>
                 <h3>Gestão de Entregas</h3>
                 <p>Controle completo de todas as entregas em tempo real</p>
+                <a href="{% url 'list_entrega' %}" class="btn-secondary" style="margin-top: 1rem;">Acessar</a>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">👨‍💼</div>
-                <a href="{% url 'list_motorista' %}" class="nav-link">Motoristas</a>
+                <h3>Motoristas</h3>
                 <p>Cadastro e gerenciamento de equipe de motoristas</p>
+                <a href="{% url 'list_motorista' %}" class="btn-secondary" style="margin-top: 1rem;">Acessar</a>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">🚛</div>
                 <h3>Frota de Veículos</h3>
                 <p>Controle da frota e manutenções programadas</p>
+                <a href="{% url 'list_veiculo' %}" class="btn-secondary" style="margin-top: 1rem;">Acessar</a>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">📊</div>
-                <h3>Relatórios</h3>
-                <p>Análises detalhadas e estatísticas de performance</p>
+                <div class="feature-icon">🗺️</div>
+                <h3>Rotas</h3>
+                <p>Planejamento e otimização de rotas de entrega</p>
+                <a href="{% url 'list_rota' %}" class="btn-secondary" style="margin-top: 1rem;">Acessar</a>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">📍</div>
+                <div class="feature-icon">👤</div>
+                <h3>Clientes</h3>
+                <p>Cadastro e histórico de clientes</p>
+                <a href="{% url 'list_cliente' %}" class="btn-secondary" style="margin-top: 1rem;">Acessar</a>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
                 <h3>Rastreamento</h3>
-                <p>Acompanhe entregas em tempo real no mapa</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">⚡</div>
-                <h3>Otimização de Rotas</h3>
-                <p>Rotas inteligentes para economia e eficiência</p>
+                <p>Acompanhe entregas em tempo real</p>
+                <a href="{% url 'buscar_entrega' %}" class="btn-secondary" style="margin-top: 1rem;">Rastrear</a>
             </div>
         </div>
     </div>

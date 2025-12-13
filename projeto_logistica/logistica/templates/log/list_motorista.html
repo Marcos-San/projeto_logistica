@@ -25,62 +25,103 @@
 
         <div class="table-container">
             <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nome</th>
-                        <th>CNH</th>
-                        <th>Status</th>
-                        <th class="actions-column">Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for motorista in motoristas %}
-                    <tr>
-                        <td>#{{ motorista.id }}</td>
-                        <td>
-                            <div class="driver-info">
-                                <div class="driver-avatar">{{ motorista.nome|first|upper }}</div>
-                                <span class="driver-name">{{ motorista.nome }}</span>
-                            </div>
-                        </td>
-                        <td>{{ motorista.cnh }}</td>
-                        <td>
-                            {% if motorista.status == "Ativo" or motorista.status == "ativo" %}
-                                <span class="badge badge-success">{{ motorista.status }}</span>
-                            {% elif motorista.status == "Inativo" or motorista.status == "inativo" %}
-                                <span class="badge badge-danger">{{ motorista.status }}</span>
-                            {% else %}
-                                <span class="badge badge-warning">{{ motorista.status }}</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <div class="action-buttons">
-                                <a href="{% url 'atualizar_motorista' motorista.id %}"
-                                   class="btn-action btn-edit"
-                                   title="Editar">
-                                    ✏️ Editar
-                                </a>
-                                <a href="{% url 'deletar_motorista' motorista.id %}"
-                                   class="btn-action btn-delete"
-                                   title="Deletar"
-                                   onclick="return confirm('Tem certeza que deseja deletar este motorista?')">
-                                    🗑️ Deletar
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="empty-state">
-                            <div class="empty-icon">📋</div>
-                            <p>Nenhum motorista cadastrado</p>
-                            <a href="{% url 'criar_motorista' %}" class="btn-primary">Cadastrar Primeiro Motorista</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>CPF</th>
+            <th>CNH</th>
+            <th>Status</th>
+            <th>Acesso</th>
+            <th>Último Login</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for motorista in motoristas %}
+        <tr>
+            <td>
+                <strong>{{ motorista.nome }}</strong>
+                <br>
+                <small class="text-muted">{{ motorista.telefone }}</small>
+            </td>
+            <td>{{ motorista.cpf }}</td>
+            <td>{{ motorista.get_cnh_display }}</td>
+            <td>
+                {% if motorista.status == 'ativo' %}
+                <span class="badge bg-success">Ativo</span>
+                {% elif motorista.status == 'disponivel' %}
+                <span class="badge bg-info">Disponível</span>
+                {% elif motorista.status == 'em_rota' %}
+                <span class="badge bg-warning">Em Rota</span>
+                {% else %}
+                <span class="badge bg-secondary">{{ motorista.get_status_display }}</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if motorista.tem_acesso %}
+                    {% if motorista.acesso_ativo %}
+                    <span class="badge bg-success" title="Usuário ativo">
+                        <i class="bi bi-check-circle"></i> Ativo
+                    </span>
+                    <br>
+                    <small>
+                        Grupos:
+                        {% if motorista.user.groups.all %}
+                            {% for g in motorista.user.groups.all %}
+                            <span class="badge bg-info badge-sm">{{ g.name }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="text-muted">Sem grupos</span>
+                        {% endif %}
+                    </small>
+                    {% else %}
+                    <span class="badge bg-danger" title="Usuário bloqueado">
+                        <i class="bi bi-x-circle"></i> Bloqueado
+                    </span>
+                    {% endif %}
+                {% else %}
+                <span class="badge bg-warning" title="Sem usuário cadastrado">
+                    <i class="bi bi-exclamation-triangle"></i> Sem acesso
+                </span>
+                {% endif %}
+            </td>
+            <td>
+                {% if motorista.user and motorista.user.last_login %}
+                    {{ motorista.user.last_login|date:"d/m/Y H:i" }}
+                {% elif motorista.tem_acesso %}
+                    <span class="text-muted">Nunca acessou</span>
+                {% else %}
+                    <span class="text-muted">-</span>
+                {% endif %}
+            </td>
+            <td>
+                <div class="btn-group" role="group">
+                    <a href="{% url 'detalhes_motorista' motorista.id %}"
+                       class="btn-action btn-view" title="Ver detalhes">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                    <a href="{% url 'atualizar_motorista' motorista.id %}"
+                       class="btn-action btn-edit" title="Editar">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <a href="{% url 'gerenciar_acesso_motorista' motorista.id %}"
+                       class="btn-action btn-key" title="Gerenciar acesso">
+                        <i class="bi bi-key"></i>
+                    </a>
+                    {% if user.is_superuser %}
+                    <a href="{% url 'deletar_motorista' motorista.id %}"
+                       class="btn-action btn-delete"
+                       title="Deletar"
+                       onclick="return confirm('Tem certeza que deseja deletar {{ motorista.nome }}?');">
+                        <i class="bi bi-trash"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
         </div>
     </div>
 </section>

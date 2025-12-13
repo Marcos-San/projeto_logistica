@@ -1,13 +1,13 @@
 {% extends 'log/base.html' %}
 
-{% block title %}Lista de Veículos - Sistema de Logística{% endblock %}
+{% block title %}Lista de Rotas - Sistema de Logística{% endblock %}
 
 {% block content %}
 <section class="hero hero-small">
     <div class="container">
         <div class="hero-content">
-            <h1>🚛 Rotas</h1>
-            <p>Registro e gerenciamento de rotas</p>
+            <h1>🗺️ Rotas</h1>
+            <p>Registro e gerenciamento de rotas ({{ total|default:0 }} total)</p>
             <a href="{% url 'criar_rota' %}" class="btn-primary">+ Registrar Rota</a>
         </div>
     </div>
@@ -29,14 +29,15 @@
                     <tr>
                         <th>ID</th>
                         <th>Nome</th>
-                        <th>Descrição</th>
                         <th>Motorista</th>
                         <th>Veículo</th>
-                        <th>Data de inicio</th>
+                        <th>Data</th>
                         <th>Status</th>
-                        <th>Capacidade Total</th>
-                        <th>KM total</th>
-                        <th>Tempo estimado da rota</th>
+                        <th>Entregas</th>
+                        <th>Capacidade</th>
+                        <th>KM Total</th>
+                        <th>Tempo</th>
+                        <th>Valor Total</th>
                         <th class="actions-column">Ações</th>
                     </tr>
                 </thead>
@@ -44,21 +45,48 @@
                     {% for rota in rotas %}
                     <tr>
                         <td>#{{ rota.id }}</td>
-                        <td>{{ rota.nome }}</td>
-                        <td>{{ rota.descricao }}</td>
-                        <td>{{ rota.motorista }}</td>
-                        <td>{{ rota.veiculo }}</td>
-                        <td>{{ rota.data_rota }}</td>
-                        <td>{{ rota.status }}</td>
-                        <td>{{ rota.capacidade_total_utilizada }}</td>
-                        <td>{{ rota.km_total_estimado }}</td>
-                        <td>{{ rota.tempo_estimado }} h</td>
+                        <td><strong>{{ rota.nome }}</strong></td>
+                        <td>
+                            <div class="driver-info">
+                                <div class="driver-avatar" style="width: 30px; height: 30px; font-size: 0.8rem;">
+                                    {{ rota.motorista.nome|first|upper }}
+                                </div>
+                                <span>{{ rota.motorista.nome }}</span>
+                            </div>
+                        </td>
+                        <td>{{ rota.veiculo.placa }}</td>
+                        <td>{{ rota.data_rota|date:"d/m/Y" }}</td>
+                        <td>
+                            {% if rota.status == 'planejada' %}
+                                <span class="badge badge-secondary">Planejada</span>
+                            {% elif rota.status == 'em_andamento' %}
+                                <span class="badge badge-info">Em Andamento</span>
+                            {% elif rota.status == 'concluida' %}
+                                <span class="badge badge-success">Concluída</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge badge-primary">
+                                {{ rota.entregas.count }} entrega{{ rota.entregas.count|pluralize }}
+                            </span>
+                        </td>
+                        <td>
+                            <small style="display: block;">
+                                {{ rota.capacidade_total_utilizada }} / {{ rota.veiculo.capacidade_maxima }} kg
+                            </small>
+                            <div style="background: #e0e0e0; height: 6px; border-radius: 3px; margin-top: 3px;">
+                                <div style="background: #2563eb; height: 6px; border-radius: 3px; width: {% widthratio rota.capacidade_total_utilizada rota.veiculo.capacidade_maxima 100 %}%;"></div>
+                            </div>
+                        </td>
+                        <td>{{ rota.km_total_estimado }} km</td>
+                        <td>{{ rota.tempo_estimado }} min</td>
+                        <td>R$ {{ rota.valor_total_entregas|floatformat:2 }}</td>
                         <td>
                             <div class="action-buttons">
                                 <a href="{% url 'lista_entregas' rota.id %}"
-                                   class="btn-action btn-edit"
-                                   title="Editar">
-                                    📦 Detalhes da Rota
+                                   class="btn-action btn-primary"
+                                   title="Ver Entregas">
+                                    📦 Entregas
                                 </a>
                                 <a href="{% url 'atualizar_rota' rota.id %}"
                                    class="btn-action btn-edit"
@@ -68,7 +96,7 @@
                                 <a href="{% url 'deletar_rota' rota.id %}"
                                    class="btn-action btn-delete"
                                    title="Deletar"
-                                   onclick="return confirm('Tem certeza que deseja deletar esta rota?')">
+                                   onclick="return confirm('Tem certeza que deseja deletar esta rota?\n\nAs entregas serão liberadas e poderão ser adicionadas em outras rotas.')">
                                     🗑️ Deletar
                                 </a>
                             </div>
@@ -76,7 +104,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="empty-state">
+                        <td colspan="12" class="empty-state">
                             <div class="empty-icon">📋</div>
                             <p>Nenhuma rota cadastrada</p>
                             <a href="{% url 'criar_rota' %}" class="btn-primary">Registrar Primeira Rota</a>
@@ -88,5 +116,23 @@
         </div>
     </div>
 </section>
+
+<!-- Informações sobre Capacidade -->
+{% if rotas %}
+<section class="page-section">
+    <div class="container">
+        <div class="form-card">
+            <h2>ℹ️ Informações Importantes</h2>
+            <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+                <li>Cada rota pode ter <strong>várias entregas</strong></li>
+                <li>Cada entrega só pode estar em <strong>uma rota</strong> por vez</li>
+                <li>A capacidade total das entregas não pode exceder a capacidade do veículo</li>
+                <li>Ao deletar uma rota, as entregas são <strong>liberadas</strong> automaticamente</li>
+                <li>Ao concluir uma rota, o veículo e motorista ficam <strong>disponíveis</strong> novamente</li>
+            </ul>
+        </div>
+    </div>
+</section>
+{% endif %}
 
 {% endblock %}

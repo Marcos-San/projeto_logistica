@@ -1,37 +1,159 @@
 {% extends 'log/base.html' %}
-{% load crispy_forms_tags %}
 
-{% block title %}Atualizar Motorista - Sistema de Logística{% endblock %}
+{% block title %}Editar Motorista - {{ motorista.nome }}{% endblock %}
 
 {% block content %}
-<section class="page-section">
-    <div class="container">
-        <div class="page-header">
-            <h1>✏️ Atualizar Dados do Motorista</h1>
-            <a href="{% url 'list_motorista' %}" class="btn-secondary">← Voltar</a>
-        </div>
+<div class="container">
+    <h1>✏️ Editar Motorista: {{ motorista.nome }}</h1>
 
-        <div class="form-card">
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-
-            <form method="post" enctype="multipart/form-data" class="form-styled">
+    <div class="card">
+        <div class="card-body">
+            <form method="post" class="form-styled">
                 {% csrf_token %}
-                {{ form|crispy }}
 
-                <div class="form-actions">
-                    <button type="submit" class="btn-submit">
-                        <span>✓</span> Atualizar Motorista
+                <h5 class="card-title mb-4">📋 Informações Pessoais</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.nome.id_for_label }}">{{ form.nome.label }} *</label>
+                        {{ form.nome }}
+                        {% if form.nome.errors %}
+                        <div class="text-danger">{{ form.nome.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.cpf.id_for_label }}">{{ form.cpf.label }} *</label>
+                        {{ form.cpf }}
+                        <small class="form-text text-muted">Nome de usuário: {{ motorista.username }}</small>
+                        {% if form.cpf.errors %}
+                        <div class="text-danger">{{ form.cpf.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.cnh.id_for_label }}">{{ form.cnh.label }} *</label>
+                        {{ form.cnh }}
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.telefone.id_for_label }}">{{ form.telefone.label }} *</label>
+                        {{ form.telefone }}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
+                        {{ form.status }}
+                    </div>
+
+                    <!-- Campo de informação da data de cadastro (apenas na edição) -->
+                    {% if form.info_data_cadastro %}
+                    <div class="col-md-6 mb-3">
+                        {{ form.info_data_cadastro.label_tag }}
+                        {{ form.info_data_cadastro }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Informações de Acesso -->
+                {% if motorista.user %}
+                <hr class="my-4">
+                <h5 class="card-title mb-4">🔐 Informações de Acesso</h5>
+
+                <div class="alert alert-info">
+                    <p><strong>Usuário:</strong> {{ motorista.user.username }}</p>
+                    <p><strong>Status do Acesso:</strong>
+                        {% if motorista.user.is_active %}
+                        <span class="badge bg-success">Ativo</span>
+                        {% else %}
+                        <span class="badge bg-danger">Bloqueado</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Último Login:</strong>
+                        {% if motorista.user.last_login %}
+                            {{ motorista.user.last_login|date:"d/m/Y H:i" }}
+                        {% else %}
+                            <span class="text-muted">Nunca acessou</span>
+                        {% endif %}
+                    </p>
+
+                    {% if user.is_staff %}
+                    <div class="mt-2">
+                        <a href="{% url 'gerenciar_acesso_motorista' motorista.id %}" class="btn btn-sm btn-warning">
+                            <i class="bi bi-key"></i> Gerenciar Acesso
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <p><strong>Este motorista não possui usuário de acesso.</strong></p>
+                    {% if user.is_staff %}
+                    <a href="{% url 'criar_usuario_motorista' motorista.id %}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-person-plus"></i> Criar Usuário
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div class="form-actions mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Salvar Alterações
                     </button>
-                    <a href="{% url 'list_motorista' %}" class="btn-cancel">Cancelar</a>
+
+                    {% if user.is_staff %}
+                    <a href="{% url 'detalhes_motorista' motorista.id %}" class="btn btn-secondary">
+                        <i class="bi bi-eye"></i> Ver Detalhes
+                    </a>
+                    <a href="{% url 'list_motorista' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Voltar para Lista
+                    </a>
+                    {% else %}
+                    <a href="{% url 'detalhes_motorista' motorista.id %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </a>
+                    {% endif %}
                 </div>
             </form>
         </div>
     </div>
-</section>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Máscaras para os campos
+    // CPF
+    const cpfInput = document.getElementById('{{ form.cpf.id_for_label }}');
+    if (cpfInput) {
+        cpfInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 3 && value.length <= 6) {
+                value = value.replace(/(\d{3})(\d+)/, '$1.$2');
+            } else if (value.length > 6 && value.length <= 9) {
+                value = value.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3');
+            } else if (value.length > 9) {
+                value = value.replace(/(\d{3})(\d{3})(\d{3})(\d+)/, '$1.$2.$3-$4');
+            }
+            e.target.value = value;
+        });
+    }
+
+    // Telefone
+    const telefoneInput = document.getElementById('{{ form.telefone.id_for_label }}');
+    if (telefoneInput) {
+        telefoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 2 && value.length <= 7) {
+                value = value.replace(/(\d{2})(\d+)/, '($1) $2');
+            } else if (value.length > 7) {
+                value = value.replace(/(\d{2})(\d{5})(\d+)/, '($1) $2-$3');
+            }
+            e.target.value = value;
+        });
+    }
+});
+</script>
 {% endblock %}

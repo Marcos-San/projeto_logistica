@@ -2,9 +2,12 @@ from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
 from .views import custom_logout
+from django.urls import path
+from django.contrib.auth import views as auth_views
 
 
 urlpatterns = [
+    # HOME E AUTENTICAÇÃO
     path('', views.home, name='home'),
     path(
         'login/',
@@ -13,34 +16,50 @@ urlpatterns = [
             redirect_authenticated_user=True
         ),
         name='login'
-        ),
-    path('logout/', custom_logout, name='logout'),
+    ),
+    path('logout/', views.custom_logout, name='logout'),
 
-    path('list_motorista/', views.list_motorista, name='list_motorista'),
-    path('criar_motorista/', views.criar_motorista, name='criar_motorista'),
-    path('deletar_motorista/<int:id>', views.deletar_motorista, name='deletar_motorista'),
-    path('atualizar_motorista/<int:id>', views.atualizar_motorista, name='atualizar_motorista'),
-
-    path('list_cliente/', views.list_cliente, name='list_cliente'),
-    path('criar_cliente/', views.criar_cliente, name='criar_cliente'),
-    path('deletar_cliente/<int:id>', views.deletar_cliente, name='deletar_cliente'),
-    path('atualizar_cliente/<int:id>', views.atualizar_cliente, name='atualizar_cliente'),
-
-    path('list_veiculo/', views.list_veiculo, name='list_veiculo'),
-    path('criar_veiculo/', views.criar_veiculo, name='criar_veiculo'),
-    path('deletar_veiculo/<int:id>', views.deletar_veiculo, name='deletar_veiculo'),
-    path('atualizar_veiculo/<int:id>', views.atualizar_veiculo, name='atualizar_veiculo'),
-
+    # BUSCA
     path('buscar_entrega/', views.buscar_entrega, name='buscar_entrega'),
 
-    path('list_entrega/', views.list_entrega, name='list_entrega'),
-    path('criar_entrega/', views.criar_entrega, name='criar_entrega'),
-    path('deletar_entrega/<int:id>', views.deletar_entrega, name='deletar_entrega'),
-    path('atualizar_entrega/<int:id>', views.atualizar_entrega, name='atualizar_entrega'),
+    # CRUD MOTORISTA (atualizadas)
+    path('motoristas/', views.list_motorista, name='list_motorista'),
+    path('motoristas/criar/', views.criar_motorista, name='criar_motorista'),
+    path('motoristas/<int:id>/', views.detalhes_motorista, name='detalhes_motorista'),
+    path('motoristas/<int:id>/editar/', views.atualizar_motorista, name='atualizar_motorista'),
+    path('motoristas/<int:id>/deletar/', views.deletar_motorista, name='deletar_motorista'),
 
-    path('list_rota/', views.list_rota, name='list_rota'),
-    path('criar_rota/', views.criar_rota, name='criar_rota'),
-    path('deletar/<int:id>', views.deletar_rota, name='deletar_rota'),
-    path('atualizar_rota/<int:id>', views.atualizar_rota, name='atualizar_rota'),
-    path('lista_entregas/<int:rota_id>', views.lista_entregas, name='lista_entregas'),
+    # Gerenciamento de acesso
+    path('motoristas/<int:id>/acesso/', views.gerenciar_acesso_motorista, name='gerenciar_acesso_motorista'),
+    path('motoristas/<int:id>/acesso/criar-usuario/', views.criar_usuario_motorista, name='criar_usuario_motorista'),
+    path('motoristas/verificar-grupos/', views.verificar_grupos_motoristas, name='verificar_grupos_motoristas'),
+
+    # CRUD CLIENTE
+    path('clientes/', views.list_cliente, name='list_cliente'),
+    path('clientes/criar/', views.criar_cliente, name='criar_cliente'),
+    path('clientes/<int:id>/editar/', views.atualizar_cliente, name='atualizar_cliente'),
+    path('clientes/<int:id>/deletar/', views.deletar_cliente, name='deletar_cliente'),
+
+    # CRUD VEÍCULO
+    path('veiculos/', views.list_veiculo, name='list_veiculo'),
+    path('veiculos/criar/', views.criar_veiculo, name='criar_veiculo'),
+    path('veiculos/<int:id>/editar/', views.atualizar_veiculo, name='atualizar_veiculo'),
+    path('veiculos/<int:id>/deletar/', views.deletar_veiculo, name='deletar_veiculo'),
+
+    # CRUD ENTREGA
+    path('entregas/', views.list_entrega, name='list_entrega'),
+    path('entregas/criar/', views.criar_entrega, name='criar_entrega'),
+    path('entregas/<int:id>/editar/', views.atualizar_entrega, name='atualizar_entrega'),
+    path('entregas/<int:id>/deletar/', views.deletar_entrega, name='deletar_entrega'),
+
+    # CRUD ROTA
+    path('rotas/', views.list_rota, name='list_rota'),
+    path('rotas/criar/', views.criar_rota, name='criar_rota'),
+    path('rotas/<int:id>/editar/', views.atualizar_rota, name='atualizar_rota'),
+    path('rotas/<int:id>/deletar/', views.deletar_rota, name='deletar_rota'),
+
+    # ROTAS - GERENCIAMENTO DE ENTREGAS
+    path('rotas/<int:rota_id>/entregas/', views.lista_entregas, name='lista_entregas'),
+    path('rotas/<int:rota_id>/adicionar-entrega/', views.adicionar_entrega_rota, name='adicionar_entrega_rota'),
+    path('entregas/<int:entrega_id>/remover-rota/', views.remover_entrega_rota, name='remover_entrega_rota'),
 ]

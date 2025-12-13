@@ -1,0 +1,162 @@
+{% extends 'log/base.html' %}
+
+{% block title %}Detalhes do Motorista - {{ motorista.nome }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>👨‍✈️ Detalhes do Motorista</h1>
+        <div>
+            {% if user.is_staff %}
+            <a href="{% url 'atualizar_motorista' motorista.id %}" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Editar
+            </a>
+            <a href="{% url 'gerenciar_acesso_motorista' motorista.id %}" class="btn btn-info">
+                <i class="bi bi-key"></i> Gerenciar Acesso
+            </a>
+            {% endif %}
+            <a href="{% url 'list_motorista' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Informações Pessoais -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-badge"></i> Informações Pessoais</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Nome:</strong> {{ motorista.nome }}</p>
+                            <p><strong>CPF:</strong> {{ motorista.cpf }}</p>
+                            <p><strong>CNH:</strong> {{ motorista.get_cnh_display }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Telefone:</strong> {{ motorista.telefone }}</p>
+                            <p><strong>Status:</strong> 
+                                <span class="badge bg-{% if motorista.status == 'ativo' %}success{% elif motorista.status == 'disponivel' %}info{% elif motorista.status == 'em_rota' %}warning{% else %}secondary{% endif %}">
+                                    {{ motorista.get_status_display }}
+                                </span>
+                            </p>
+                            <p><strong>Cadastrado em:</strong> {{ motorista.data_cadastro|date:"d/m/Y" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Informações de Acesso -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-key"></i> Acesso ao Sistema</h5>
+                </div>
+                <div class="card-body">
+                    {% if motorista.user %}
+                    <div class="alert alert-success">
+                        <h6><i class="bi bi-check-circle"></i> Usuário Cadastrado</h6>
+                        <p><strong>Nome de Usuário:</strong> {{ motorista.user.username }}</p>
+                        <p><strong>E-mail:</strong> {{ motorista.user.email|default:"Não informado" }}</p>
+                        <p><strong>Status do Acesso:</strong> 
+                            {% if motorista.user.is_active %}
+                            <span class="badge bg-success">Ativo</span>
+                            {% else %}
+                            <span class="badge bg-danger">Bloqueado</span>
+                            {% endif %}
+                        </p>
+
+                        <!-- NOVO: Informações do Grupo -->
+                        <p><strong>Grupos:</strong>
+                            {% for grupo in motorista.user.groups.all %}
+                            <span class="badge bg-info">{{ grupo.name }}</span>
+                            {% empty %}
+                            <span class="badge bg-warning">Sem grupos</span>
+                            {% endfor %}
+                        </p>
+
+                        <p><strong>Último Login:</strong> 
+                            {% if motorista.user.last_login %}
+                                {{ motorista.user.last_login|date:"d/m/Y H:i" }}
+                            {% else %}
+                                <span class="text-muted">Nunca acessou</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <h6><i class="bi bi-exclamation-triangle"></i> Sem Acesso ao Sistema</h6>
+                        <p>Este motorista ainda não possui usuário para acessar o sistema.</p>
+                        {% if user.is_staff %}
+                        <a href="{% url 'criar_usuario_motorista' motorista.id %}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-person-plus"></i> Criar Usuário
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Estatísticas -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-graph-up"></i> Estatísticas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="stat-card mb-3">
+                        <h3>{{ total_entregas }}</h3>
+                        <p>Total de Entregas</p>
+                    </div>
+                    
+                    <div class="stat-card mb-3">
+                        <h3>{{ entregas_pendentes }}</h3>
+                        <p>Entregas Pendentes</p>
+                    </div>
+                    
+                    <div class="stat-card mb-3">
+                        <h3>{{ entregas_entregues }}</h3>
+                        <p>Entregas Concluídas</p>
+                    </div>
+                    
+                    <div class="stat-card mb-3">
+                        <h3>{{ rotas_ativas }}</h3>
+                        <p>Rotas Ativas</p>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3>{{ rotas_concluidas }}</h3>
+                        <p>Rotas Concluídas</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Ações Rápidas -->
+            {% if user.is_staff %}
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0"><i class="bi bi-lightning"></i> Ações Rápidas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'list_entrega' %}?motorista={{ motorista.id }}" class="btn btn-outline-primary">
+                            <i class="bi bi-box-seam"></i> Ver Entregas
+                        </a>
+                        <a href="{% url 'list_rota' %}?motorista={{ motorista.id }}" class="btn btn-outline-info">
+                            <i class="bi bi-map"></i> Ver Rotas
+                        </a>
+                        {% if motorista.user %}
+                        <a href="{% url 'gerenciar_acesso_motorista' motorista.id %}" class="btn btn-outline-dark">
+                            <i class="bi bi-gear"></i> Gerenciar Acesso
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

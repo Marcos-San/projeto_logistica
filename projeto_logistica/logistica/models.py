@@ -103,7 +103,7 @@ class Motorista(models.Model):
             senha = ''.join(random.choices(string.digits, k=4)) + '@Motorista'
 
         try:
-            # Criar usuário
+            # Criar usuário COM CONTA ATIVA
             user = User.objects.create_user(
                 username=username,
                 password=senha,
@@ -112,23 +112,17 @@ class Motorista(models.Model):
                 last_name=' '.join(self.nome.split()[1:]) if len(self.nome.split()) > 1 else '',
                 is_staff=False,
                 is_superuser=False,
-                is_active=True
+                is_active=True  # Conta já ativa
             )
 
-            # ADICIONAR AO GRUPO MOTORISTAS (grupo que você criou no admin)
-            try:
-                grupo_motorista = Group.objects.get(name='Motoristas')
-                user.groups.add(grupo_motorista)
-                print(f"✅ Usuário {username} adicionado ao grupo Motoristas")
-            except Group.DoesNotExist:
-                # Se o grupo não existir, criar automaticamente
-                grupo_motorista = Group.objects.create(name='Motoristas')
-                user.groups.add(grupo_motorista)
-                print(f"⚠️ Grupo Motoristas não existia. Criado automaticamente.")
-            except Exception as e:
-                print(f"⚠️ Erro ao adicionar ao grupo: {str(e)}")
+            # ADICIONAR AO GRUPO MOTORISTAS
+            grupo_motorista = Group.objects.get_or_create(name='Motoristas')[0]
+            user.groups.add(grupo_motorista)
+            user.save()  # Salvar alterações no grupo
 
-            # Vincular ao motorista
+            print(f"✅ Usuário {username} criado e adicionado ao grupo Motoristas")
+
+            # Vincular ao motorista e salvar
             self.user = user
             self.save()
 
@@ -143,12 +137,16 @@ class Motorista(models.Model):
                     password=senha,
                     email=f"{username}@logitrans.com.br",
                     first_name=self.nome.split()[0],
-                    last_name=' '.join(self.nome.split()[1:]) if len(self.nome.split()) > 1 else ''
+                    last_name=' '.join(self.nome.split()[1:]) if len(self.nome.split()) > 1 else '',
+                    is_staff=False,
+                    is_superuser=False,
+                    is_active=True  # Conta já ativa
                 )
 
                 # Adicionar ao grupo Motoristas
                 grupo_motorista = Group.objects.get_or_create(name='Motoristas')[0]
                 user.groups.add(grupo_motorista)
+                user.save()
 
                 self.user = user
                 self.save()
@@ -157,6 +155,7 @@ class Motorista(models.Model):
 
             except Exception as e2:
                 raise Exception(f"Erro ao criar usuário: {str(e2)}")
+
 
     def adicionar_ao_grupo_motoristas(self):
         """Adiciona o usuário do motorista ao grupo Motoristas"""
@@ -312,6 +311,7 @@ class Veiculo(models.Model):
     capacidade_maxima = models.FloatField()
     km_atual = models.IntegerField(default=0)
     status = models.CharField(max_length=20, choices=STATUS_VEICULO, default='disponivel')
+    # SOLUÇÃO 1: Mantemos a relação opcional com Motorista
     motorista = models.OneToOneField(
         Motorista,
         null=True,
@@ -408,7 +408,7 @@ class Entrega(models.Model):
     # Observações
     obs = models.TextField(blank=True, null=True)
 
-    # Relacionamentos
+    # SOLUÇÃO 1: Mantemos a relação opcional direta com Motorista
     motorista = models.ForeignKey(
         Motorista,
         on_delete=models.SET_NULL,
@@ -440,3 +440,23 @@ class Entrega(models.Model):
         verbose_name = 'Entrega'
         verbose_name_plural = 'Entregas'
         ordering = ['-data_solicitacao']
+
+
+@receiver(post_save, sender=User)
+def configurar_perfil_motorista(sender, instance, created, **kwargs):
+    """Configurar perfil quando usuário é criado para motorista"""
+    if created:
+        # Criar perfil básico
+        perfil, perfil_created = PerfilUsuario.objects.get_or_create(user=instance)
+
+        # Verificar se é motorista
+        try:
+            motorista = Motorista.objects.get(user=instance)
+            perfil.motorista = motorista
+            perfil.tipo_usuario = 'motorista'
+            perfil.save()
+            print(f"✅ Perfil configurado para motorista {motorista.nome}")
+        except Motorista.DoesNotExist:
+            # Se não for motorista, definir como cliente
+            perfil.tipo_usuario = 'cliente'
+            perfil.save()

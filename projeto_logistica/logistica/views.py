@@ -1,16 +1,138 @@
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import Group
 from django.core.mail import send_mail
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, Http404
-from django.contrib.auth import logout
+from django.contrib.auth import logout, authenticate, login
 from django.db.models import Q, Sum
 from .forms import MotoristaForm, ClienteForm, VeiculoForm, EntregaForm, RotaForm, GerenciarAcessoMotoristaForm, \
     CriarUsuarioMotoristaForm
 from .models import Motorista, Cliente, Veiculo, Entrega, Rota
 from .permissions import *  # Importe as novas funções de permissão
+from django.contrib.auth.decorators import user_passes_test
+from functools import wraps
 
+
+# ============================================
+# FUNÇÕES DE VERIFICAÇÃO DE GRUPO (SUBSTITUTAS)
+# ============================================
+
+def verificar_grupo(grupo_nome):
+    """Retorna uma função que verifica se usuário está no grupo"""
+
+    def check(user):
+        return user.is_authenticated and user.groups.filter(name=grupo_nome).exists()
+
+    return check
+
+
+def requer_grupo(nome_grupo, login_url='/'):
+    """Decorator para verificar grupo (alternativa ao group_required)"""
+
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                from django.contrib.auth.views import redirect_to_login
+                return redirect_to_login(request.get_full_path())
+
+            if not request.user.groups.filter(name=nome_grupo).exists():
+                messages.error(request, f'Acesso restrito ao grupo: {nome_grupo}')
+                return redirect(login_url)
+
+            return view_func(request, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+# ============================================
+# VERIFICAÇÕES ESPECÍFICAS PARA SEU SISTEMA
+# ============================================
+
+def is_admin(user):
+    """Verifica se usuário é administrador"""
+    return user.is_authenticated and user.is_staff
+
+
+def is_motorista(user):
+    """Verifica se usuário é motorista"""
+    if not user.is_authenticated:
+        return False
+    # Verifica se tem perfil de motorista E está no grupo Motoristas
+    tem_perfil = hasattr(user, 'motorista')
+    no_grupo = user.groups.filter(name='Motoristas').exists()
+    return tem_perfil and no_grupo
+
+
+def is_admin_or_motorista(user):
+    """Verifica se usuário é admin ou motorista"""
+    return is_admin(user) or is_motorista(user)
+
+
+# ============================================
+# DECORATORS PRONTOS PARA USAR
+# ============================================
+
+# Use estes decorators nas suas views:
+# @admin_required
+# @motorista_required
+# @admin_or_motorista_required
+
+def admin_required(view_func):
+    """Decorator para views que requerem admin"""
+    decorated_view_func = login_required(user_passes_test(is_admin)(view_func))
+    return decorated_view_func
+
+
+def motorista_required(view_func):
+    """Decorator para views que requerem motorista"""
+    decorated_view_func = login_required(user_passes_test(is_motorista)(view_func))
+    return decorated_view_func
+
+
+def admin_or_motorista_required(view_func):
+    """Decorator para views que requerem admin OU motorista"""
+    decorated_view_func = login_required(user_passes_test(is_admin_or_motorista)(view_func))
+    return decorated_view_func
+
+
+def grupo_required(grupo_nome):
+    """Decorator compatível com o antigo group_required"""
+
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                messages.error(request, 'Você precisa estar logado para acessar esta página.')
+                return redirect('login')
+
+            if not request.user.groups.filter(name=grupo_nome).exists():
+                messages.error(request, f'Acesso negado. Permissão requerida: {grupo_nome}')
+                return redirect('home')
+
+            return view_func(request, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+# ============================================
+# FUNÇÕES AUXILIARES PARA PERMISSÕES
+# ============================================
+
+def is_in_group(user, group_name):
+    """Verifica se usuário está em um grupo específico"""
+    return user.groups.filter(name=group_name).exists()
+
+
+def is_admin_or_in_group(user, group_name):
+    """Verifica se usuário é admin ou está em grupo específico"""
+    return user.is_staff or user.groups.filter(name=group_name).exists()
 
 
 # HOME E AUTENTICAÇÃO -------------------------------------
@@ -20,6 +142,14 @@ def home(request):
     # Para usuários não autenticados, mostrar apenas busca
     if not request.user.is_authenticated:
         return render(request, 'log/home.html', {})
+
+    # Verificar se é motorista (tem perfil de motorista)
+    try:
+        if hasattr(request.user, 'motorista'):
+            # Redirecionar motoristas para seu painel
+            return redirect('list_entrega')  # Ou para 'painel_motorista'
+    except:
+        pass
 
     # Para usuários autenticados, mostrar dashboard apropriado
     if request.user.is_staff:
@@ -58,6 +188,7 @@ def home(request):
         }
     else:
         # Usuário comum autenticado (sem perfil específico)
+        # Se chegou aqui e não é admin nem motorista, mostrar página básica
         context = {
             'total_entregas': 0,
             'entregas_pendentes': 0,
@@ -71,9 +202,27 @@ def home(request):
             'rotas_ativas': 0,
             'entregas_recentes': [],
         }
-        messages.info(request, 'Você não tem um perfil específico. Contate o administrador para mais acesso.')
+        # Remover a mensagem de erro ou mudar para informativa
+        messages.info(request, 'Bem-vindo ao sistema LogiTrans. Use o campo acima para rastrear entregas.')
 
     return render(request, 'log/home.html', context)
+
+
+def redirecionar_por_perfil(request):
+    """Redireciona usuário baseado no seu perfil após login"""
+    if not request.user.is_authenticated:
+        return redirect('login')
+
+    # Se for admin
+    if request.user.is_staff:
+        return redirect('home')
+
+    # Se for motorista
+    if hasattr(request.user, 'motorista'):
+        return redirect('list_entrega')
+
+    # Para outros usuários (clientes)
+    return redirect('home')
 
 
 def custom_logout(request):
@@ -106,9 +255,9 @@ def buscar_entrega(request):
 # CRUD MOTORISTA -------------------------------------
 
 @login_required
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(is_admin)
 def list_motorista(request):
-    """Lista todos os motoristas com informações de acesso"""
+    """Lista todos os motoristas com informações de acesso - Apenas Administradores"""
     motoristas = Motorista.objects.all().order_by('nome')
 
     # Adicionar informações de acesso
@@ -126,13 +275,9 @@ def list_motorista(request):
 
 
 @login_required
-@user_passes_test(can_edit_motoristas, login_url='/login/')
-@login_required
-@user_passes_test(lambda u: u.is_staff)
-@login_required
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(is_admin)
 def criar_motorista(request):
-    """Criar novo motorista com usuário de acesso"""
+    """Criar novo motorista com usuário de acesso - Apenas Administradores"""
     senha_gerada = None
     form = MotoristaForm()
 
@@ -140,31 +285,29 @@ def criar_motorista(request):
         form = MotoristaForm(request.POST)
         if form.is_valid():
             try:
+                # Adicionar o request ao form para permitir mensagens
+                form.request = request
+
                 motorista = form.save()
 
-                # Verificar se foi gerada senha inicial
-                if hasattr(form, 'senha_gerada'):
-                    senha_gerada = form.senha_gerada
-
-                    # GARANTIR que o usuário está no grupo Motoristas
-                    if motorista.user:
-                        motorista.adicionar_ao_grupo_motoristas()
-
-                        # Verificar permissões
-                        grupo_motorista = Group.objects.get(name='Motoristas')
-                        permissoes_count = grupo_motorista.permissions.count()
-
-                        messages.success(
-                            request,
-                            f'✅ Motorista cadastrado com sucesso!<br>'
-                            f'<strong>Usuário:</strong> {motorista.user.username}<br>'
-                            f'<strong>Senha:</strong> {senha_gerada}<br>'
-                            f'<strong>Grupo:</strong> Motoristas ({permissoes_count} permissões)'
-                        )
-                    else:
-                        messages.success(request, 'Motorista cadastrado, mas usuário não foi criado.')
+                # SEMPRE tentar criar usuário se não existir
+                if not motorista.user:
+                    user, senha_gerada = motorista.criar_usuario()
+                    messages.success(
+                        request,
+                        f'✅ Motorista cadastrado com sucesso!<br>'
+                        f'<strong>Usuário:</strong> {user.username}<br>'
+                        f'<strong>Senha:</strong> {senha_gerada}<br>'
+                        f'<strong>Status:</strong> Conta <strong>ATIVA</strong> - Pode acessar imediatamente!'
+                    )
                 else:
-                    messages.success(request, 'Motorista cadastrado com sucesso!')
+                    messages.success(request, '✅ Motorista cadastrado com sucesso!')
+
+                    # Garantir que o usuário está ativo
+                    if not motorista.user.is_active:
+                        motorista.user.is_active = True
+                        motorista.user.save()
+                        messages.info(request, 'Conta do usuário foi ativada automaticamente.')
 
                 return redirect('list_motorista')
 
@@ -183,13 +326,11 @@ def criar_motorista(request):
 
 @login_required
 def detalhes_motorista(request, id):
-    """Detalhes do motorista com informações de acesso"""
+    """Detalhes do motorista - Administradores ou próprio motorista"""
     motorista = get_object_or_404(Motorista, id=id)
 
-    # Verificar permissão
-    if not (request.user.is_staff or
-            (hasattr(request.user, 'motorista_profile') and
-             request.user.motorista_profile.id == motorista.id)):
+    # Verificar permissão usando as funções de permissão existentes
+    if not can_edit_motorista(request.user, motorista):
         messages.error(request, 'Acesso negado.')
         return redirect('home')
 
@@ -210,9 +351,9 @@ def detalhes_motorista(request, id):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(is_admin)
 def gerenciar_acesso_motorista(request, id):
-    """Gerenciar acesso do motorista ao sistema"""
+    """Gerenciar acesso do motorista ao sistema - Apenas Administradores"""
     motorista = get_object_or_404(Motorista, id=id)
 
     if request.method == 'POST':
@@ -311,9 +452,9 @@ def gerenciar_acesso_motorista(request, id):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(is_admin)
 def criar_usuario_motorista(request, id):
-    """Criar usuário para motorista existente"""
+    """Criar usuário para motorista existente - Apenas Administradores"""
     motorista = get_object_or_404(Motorista, id=id)
 
     if motorista.user:
@@ -375,11 +516,9 @@ def criar_usuario_motorista(request, id):
 
 
 @login_required
-@user_passes_test(lambda u: u.is_staff)
+@user_passes_test(is_admin)
 def verificar_grupos_motoristas(request):
-    """Verifica e corrige os grupos dos motoristas"""
-    from django.contrib.auth.models import Group
-
+    """Verifica e corrige os grupos dos motoristas - Apenas Administradores"""
     try:
         # Criar/obter grupo Motoristas
         grupo_motorista, created = Group.objects.get_or_create(name='Motoristas')
@@ -417,12 +556,157 @@ def verificar_grupos_motoristas(request):
     return redirect('list_motorista')
 
 
+def primeiro_acesso_motorista(request):
+    """Primeiro acesso para motoristas definirem nova senha"""
+    # Se já está logado, redirecionar
+    if request.user.is_authenticated:
+        return redirect('home')
+
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        senha_temporaria = request.POST.get('senha_temporaria')
+        nova_senha = request.POST.get('nova_senha')
+        confirmar_senha = request.POST.get('confirmar_senha')
+
+        # Validações
+        if not all([username, senha_temporaria, nova_senha, confirmar_senha]):
+            messages.error(request, 'Todos os campos são obrigatórios.')
+            return render(request, 'log/primeiro_acesso.html')
+
+        if nova_senha != confirmar_senha:
+            messages.error(request, 'As senhas não coincidem.')
+            return render(request, 'log/primeiro_acesso.html')
+
+        if len(nova_senha) < 8:
+            messages.error(request, 'A senha deve ter pelo menos 8 caracteres.')
+            return render(request, 'log/primeiro_acesso.html')
+
+        # Autenticar
+        user = authenticate(request, username=username, password=senha_temporaria)
+
+        if user is None:
+            messages.error(request, 'Credenciais inválidas.')
+            return render(request, 'log/primeiro_acesso.html')
+
+        # Verificar se é motorista
+        if not hasattr(user, 'motorista'):
+            messages.error(request, 'Este usuário não é um motorista.')
+            return render(request, 'log/primeiro_acesso.html')
+
+        # Atualizar senha
+        user.set_password(nova_senha)
+
+        # Garantir grupo Motoristas
+        grupo_motorista, _ = Group.objects.get_or_create(name='Motoristas')
+        user.groups.add(grupo_motorista)
+
+        user.save()
+
+        # Fazer login
+        login(request, user)
+
+        messages.success(request,
+                         '✅ Conta ativada com sucesso! '
+                         'Sua senha foi alterada e você já pode usar o sistema.'
+                         )
+
+        return redirect('home')
+
+    return render(request, 'log/primeiro_acesso.html')
+
+
+@login_required
+def verificar_grupo_usuario(request):
+    """Permite usuário verificar e corrigir seu próprio grupo"""
+    user = request.user
+
+    if hasattr(user, 'motorista'):
+        grupo_motorista, created = Group.objects.get_or_create(name='Motoristas')
+
+        if created:
+            messages.info(request, 'Grupo Motoristas foi criado.')
+
+        if grupo_motorista not in user.groups.all():
+            user.groups.add(grupo_motorista)
+            user.save()
+            messages.success(request, '✅ Você foi adicionado ao grupo Motoristas!')
+        else:
+            messages.info(request, 'Você já está no grupo Motoristas.')
+
+        # Contar permissões
+        permissoes_count = grupo_motorista.permissions.count()
+        messages.info(request, f'O grupo tem {permissoes_count} permissões configuradas.')
+    else:
+        messages.warning(request, 'Você não é um motorista.')
+
+    return redirect('home')
+
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def verificar_todos_grupos(request):
+    """Ferramenta admin para verificar todos os motoristas"""
+    grupo_motorista, created = Group.objects.get_or_create(name='Motoristas')
+
+    if created:
+        messages.info(request, 'Grupo Motoristas criado automaticamente.')
+
+    motoristas_com_usuario = Motorista.objects.filter(user__isnull=False)
+    corrigidos = 0
+    ja_no_grupo = 0
+
+    for motorista in motoristas_com_usuario:
+        if grupo_motorista in motorista.user.groups.all():
+            ja_no_grupo += 1
+        else:
+            motorista.user.groups.add(grupo_motorista)
+            motorista.user.save()
+            corrigidos += 1
+
+    messages.success(request,
+                     f'✅ Verificação concluída!<br>'
+                     f'• Motoristas verificados: {motoristas_com_usuario.count()}<br>'
+                     f'• Já no grupo: {ja_no_grupo}<br>'
+                     f'• Corrigidos: {corrigidos}<br>'
+                     f'• Total no grupo: {grupo_motorista.user_set.count()}'
+                     )
+
+    return redirect('list_motorista')
+
+
+@login_required
+@user_passes_test(is_motorista)
+def painel_motorista(request):
+    """Painel personalizado para motoristas"""
+    if not hasattr(request.user, 'motorista'):
+        messages.error(request, 'Acesso restrito a motoristas.')
+        return redirect('home')
+
+    motorista = request.user.motorista
+
+    # Garantir grupo
+    grupo_motorista, _ = Group.objects.get_or_create(name='Motoristas')
+    if grupo_motorista not in request.user.groups.all():
+        request.user.groups.add(grupo_motorista)
+        request.user.save()
+        messages.info(request, 'Seu acesso foi configurado automaticamente.')
+
+    context = {
+        'motorista': motorista,
+        'no_grupo_motoristas': request.user.groups.filter(name='Motoristas').exists(),
+        'grupos': list(request.user.groups.all().values_list('name', flat=True)),
+        'permissoes_count': grupo_motorista.permissions.count(),
+    }
+
+    return render(request, 'log/painel_motorista.html', context)
+
+
 @login_required
 def atualizar_motorista(request, id):
-    """Atualizar motorista existente - Admin ou próprio motorista"""
+    """Atualizar motorista existente - Administradores ou próprio motorista"""
     motorista = get_object_or_404(Motorista, id=id)
 
-    # Verificar permissão
+    # Verificar permissão usando as funções de permissão existentes
     if not can_edit_motorista(request.user, motorista):
         messages.error(request, 'Acesso negado. Você não tem permissão para editar este motorista.')
         return redirect('home')
@@ -451,13 +735,9 @@ def atualizar_motorista(request, id):
 
 
 @login_required
-@user_passes_test(can_edit_motoristas, login_url='/login/')
+@user_passes_test(is_admin)
 def deletar_motorista(request, id):
-    """Deletar motorista - Apenas admin"""
-    if not request.user.is_staff:
-        messages.error(request, 'Acesso negado. Apenas administradores podem deletar motoristas.')
-        return redirect('home')
-
+    """Deletar motorista - Apenas Administradores"""
     motorista = get_object_or_404(Motorista, id=id)
     nome = motorista.nome
     motorista.delete()
@@ -468,9 +748,9 @@ def deletar_motorista(request, id):
 # CRUD CLIENTE -------------------------------------
 
 @login_required
-@user_passes_test(can_view_clientes, login_url='/login/')
+@user_passes_test(is_admin_or_motorista)
 def list_cliente(request):
-    """Lista todos os clientes - Admin ou motorista"""
+    """Lista todos os clientes - Administradores ou Motoristas"""
     clientes = Cliente.objects.all().order_by('nome')
     context = {
         'clientes': clientes,
@@ -480,13 +760,9 @@ def list_cliente(request):
 
 
 @login_required
-@user_passes_test(can_edit_clientes, login_url='/login/')
+@user_passes_test(is_admin)
 def criar_cliente(request):
-    """Criar novo cliente - Apenas admin"""
-    if not request.user.is_staff:
-        messages.error(request, 'Acesso negado. Apenas administradores podem criar clientes.')
-        return redirect('home')
-
+    """Criar novo cliente - Apenas Administradores"""
     if request.method == 'POST':
         form = ClienteForm(request.POST)
         if form.is_valid():
@@ -503,13 +779,9 @@ def criar_cliente(request):
 
 
 @login_required
-@user_passes_test(can_edit_clientes, login_url='/login/')
+@user_passes_test(is_admin)
 def atualizar_cliente(request, id):
-    """Atualizar cliente existente - Apenas admin"""
-    if not request.user.is_staff:
-        messages.error(request, 'Acesso negado. Apenas administradores podem editar clientes.')
-        return redirect('home')
-
+    """Atualizar cliente existente - Apenas Administradores"""
     cliente = get_object_or_404(Cliente, id=id)
 
     if request.method == 'POST':
@@ -531,13 +803,9 @@ def atualizar_cliente(request, id):
 
 
 @login_required
-@user_passes_test(can_edit_clientes, login_url='/login/')
+@user_passes_test(is_admin)
 def deletar_cliente(request, id):
-    """Deletar cliente - Apenas admin"""
-    if not request.user.is_staff:
-        messages.error(request, 'Acesso negado. Apenas administradores podem deletar clientes.')
-        return redirect('home')
-
+    """Deletar cliente - Apenas Administradores"""
     cliente = get_object_or_404(Cliente, id=id)
     nome = cliente.nome
     cliente.delete()
@@ -548,9 +816,9 @@ def deletar_cliente(request, id):
 # CRUD VEÍCULO -------------------------------------
 
 @login_required
-@user_passes_test(can_view_veiculos, login_url='/login/')
+@user_passes_test(is_admin_or_motorista)
 def list_veiculo(request):
-    """Lista todos os veículos - Admin ou motorista"""
+    """Lista todos os veículos - Administradores ou Motoristas"""
     if request.user.is_staff:
         veiculos = Veiculo.objects.all().select_related('motorista').order_by('placa')
     elif hasattr(request.user, 'motorista'):
@@ -568,13 +836,9 @@ def list_veiculo(request):
 
 
 @login_required
-@user_passes_test(can_edit_veiculos, login_url='/login/')
+@user_passes_test(is_admin)
 def criar_veiculo(request):
-    """Criar novo veículo - Apenas admin"""
-    if not request.user.is_staff:
-        messages.error(request, 'Acesso negado. Apenas administradores podem criar veículos.')
-        return redirect('home')
-
+    """Criar novo veículo - Apenas Administradores"""
     if request.method == 'POST':
         form = VeiculoForm(request.POST)
         if form.is_valid():
@@ -591,13 +855,9 @@ def criar_veiculo(request):
 
 
 @login_required
-@user_passes_test(can_edit_veiculos, login_url='/login/')
+@user_passes_test(is_admin)
 def atualizar_veiculo(request, id):
-    """Atualizar veículo existente - Apenas admin"""
-    if not request.user.is_staff:
-        messages.error(request, 'Acesso negado. Apenas administradores podem editar veículos.')
-        return redirect('home')
-
+    """Atualizar veículo existente - Apenas Administradores"""
     veiculo = get_object_or_404(Veiculo, id=id)
 
     if request.method == 'POST':
@@ -619,13 +879,9 @@ def atualizar_veiculo(request, id):
 
 
 @login_required
-@user_passes_test(can_edit_veiculos, login_url='/login/')
+@user_passes_test(is_admin)
 def deletar_veiculo(request, id):
-    """Deletar veículo - Apenas admin"""
-    if not request.user.is_staff:
-        messages.error(request, 'Acesso negado. Apenas administradores podem deletar veículos.')
-        return redirect('home')
-
+    """Deletar veículo - Apenas Administradores"""
     veiculo = get_object_or_404(Veiculo, id=id)
     placa = veiculo.placa
     veiculo.delete()
@@ -636,9 +892,9 @@ def deletar_veiculo(request, id):
 # CRUD ENTREGA -------------------------------------
 
 @login_required
-@user_passes_test(can_view_entregas, login_url='/login/')
+@user_passes_test(is_admin_or_motorista)
 def list_entrega(request):
-    """Lista todas as entregas - Admin ou motorista"""
+    """Lista todas as entregas - Administradores ou Motoristas"""
     if request.user.is_staff:
         entregas = Entrega.objects.all().select_related('cliente', 'motorista', 'rota').order_by('-data_solicitacao')
     elif hasattr(request.user, 'motorista'):
@@ -658,9 +914,9 @@ def list_entrega(request):
 
 
 @login_required
-@user_passes_test(can_edit_entregas, login_url='/login/')
+@user_passes_test(is_admin_or_motorista)
 def criar_entrega(request):
-    """Criar nova entrega - Admin ou motorista"""
+    """Criar nova entrega - Administradores ou Motoristas"""
     if request.method == 'POST':
         form = EntregaForm(request.POST)
         if form.is_valid():
@@ -681,11 +937,12 @@ def criar_entrega(request):
 
 
 @login_required
+@user_passes_test(is_admin_or_motorista)
 def atualizar_entrega(request, id):
-    """Atualizar entrega existente - Admin ou motorista (apenas suas)"""
+    """Atualizar entrega existente - Administradores ou Motoristas (apenas suas)"""
     entrega = get_object_or_404(Entrega, id=id)
 
-    # Verificar permissão
+    # Verificar permissão usando as funções de permissão existentes
     if not can_edit_entrega(request.user, entrega):
         messages.error(request, 'Acesso negado. Você só pode editar suas próprias entregas.')
         return redirect('list_entrega')
@@ -720,11 +977,12 @@ def atualizar_entrega(request, id):
 
 
 @login_required
+@user_passes_test(is_admin_or_motorista)
 def deletar_entrega(request, id):
-    """Deletar entrega - Admin ou motorista (apenas suas)"""
+    """Deletar entrega - Administradores ou Motoristas (apenas suas)"""
     entrega = get_object_or_404(Entrega, id=id)
 
-    # Verificar permissão
+    # Verificar permissão usando as funções de permissão existentes
     if not can_edit_entrega(request.user, entrega):
         messages.error(request, 'Acesso negado. Você só pode deletar suas próprias entregas.')
         return redirect('list_entrega')
@@ -738,9 +996,9 @@ def deletar_entrega(request, id):
 # CRUD ROTA -------------------------------------
 
 @login_required
-@user_passes_test(can_view_rotas, login_url='/login/')
+@user_passes_test(is_admin_or_motorista)
 def list_rota(request):
-    """Lista todas as rotas - Admin ou motorista"""
+    """Lista todas as rotas - Administradores ou Motoristas"""
     if request.user.is_staff:
         rotas = Rota.objects.all().select_related('motorista', 'veiculo').prefetch_related('entregas').order_by(
             '-data_rota')
@@ -760,11 +1018,12 @@ def list_rota(request):
 
 
 @login_required
+@user_passes_test(is_admin_or_motorista)
 def lista_entregas(request, rota_id):
-    """Lista entregas de uma rota específica - Admin ou motorista (apenas suas)"""
+    """Lista entregas de uma rota específica - Administradores ou Motoristas (apenas suas)"""
     rota = get_object_or_404(Rota, id=rota_id)
 
-    # Verificar permissão
+    # Verificar permissão usando as funções de permissão existentes
     if not can_view_rota(request.user, rota):
         messages.error(request, 'Acesso negado. Você só pode ver suas próprias rotas.')
         return redirect('list_rota')
@@ -796,13 +1055,9 @@ def lista_entregas(request, rota_id):
 
 
 @login_required
-@user_passes_test(can_edit_rotas, login_url='/login/')
+@user_passes_test(is_admin)
 def criar_rota(request):
-    """Criar nova rota - Apenas admin"""
-    if not request.user.is_staff:
-        messages.error(request, 'Acesso negado. Apenas administradores podem criar rotas.')
-        return redirect('home')
-
+    """Criar nova rota - Apenas Administradores"""
     if request.method == 'POST':
         form = RotaForm(request.POST)
         if form.is_valid():
@@ -829,13 +1084,9 @@ def criar_rota(request):
 
 
 @login_required
-@user_passes_test(can_edit_rotas, login_url='/login/')
+@user_passes_test(is_admin)
 def atualizar_rota(request, id):
-    """Atualizar rota existente - Apenas admin"""
-    if not request.user.is_staff:
-        messages.error(request, 'Acesso negado. Apenas administradores podem editar rotas.')
-        return redirect('home')
-
+    """Atualizar rota existente - Apenas Administradores"""
     rota = get_object_or_404(Rota, id=id)
 
     if request.method == 'POST':
@@ -867,13 +1118,9 @@ def atualizar_rota(request, id):
 
 
 @login_required
-@user_passes_test(can_edit_rotas, login_url='/login/')
+@user_passes_test(is_admin)
 def deletar_rota(request, id):
-    """Deletar rota - Apenas admin"""
-    if not request.user.is_staff:
-        messages.error(request, 'Acesso negado. Apenas administradores podem deletar rotas.')
-        return redirect('home')
-
+    """Deletar rota - Apenas Administradores"""
     rota = get_object_or_404(Rota, id=id)
 
     # Remover entregas da rota antes de deletar
@@ -898,14 +1145,10 @@ def deletar_rota(request, id):
 
 
 @login_required
+@user_passes_test(is_admin)
 def adicionar_entrega_rota(request, rota_id):
-    """Adicionar entrega a uma rota - Admin ou motorista (apenas suas rotas)"""
+    """Adicionar entrega a uma rota - Apenas Administradores"""
     rota = get_object_or_404(Rota, id=rota_id)
-
-    # Verificar permissão
-    if not can_edit_rotas(request.user):
-        messages.error(request, 'Acesso negado. Apenas administradores podem gerenciar rotas.')
-        return redirect('list_rota')
 
     if request.method == 'POST':
         entrega_id = request.POST.get('entrega_id')
@@ -931,11 +1174,12 @@ def adicionar_entrega_rota(request, rota_id):
 
 
 @login_required
+@user_passes_test(is_admin_or_motorista)
 def remover_entrega_rota(request, entrega_id):
-    """Remover entrega de uma rota - Admin ou motorista (apenas suas entregas)"""
+    """Remover entrega de uma rota - Administradores ou Motoristas (apenas suas entregas)"""
     entrega = get_object_or_404(Entrega, id=entrega_id)
 
-    # Verificar permissão para editar a entrega
+    # Verificar permissão usando as funções de permissão existentes
     if not can_edit_entrega(request.user, entrega):
         messages.error(request, 'Acesso negado. Você só pode gerenciar suas próprias entregas.')
         return redirect('list_entrega')
@@ -943,11 +1187,6 @@ def remover_entrega_rota(request, entrega_id):
     rota_id = entrega.rota.id if entrega.rota else None
 
     if entrega.rota:
-        # Verificar permissão para editar a rota (se houver)
-        if entrega.rota and not can_edit_rotas(request.user):
-            messages.error(request, 'Acesso negado. Apenas administradores podem gerenciar rotas.')
-            return redirect('list_entrega')
-
         codigo = entrega.codigo_rastreio
         entrega.rota = None
         entrega.save()

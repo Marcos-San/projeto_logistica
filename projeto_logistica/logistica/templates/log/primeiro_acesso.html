@@ -1,0 +1,75 @@
+{% extends 'log/base.html' %}
+
+{% block title %}Primeiro Acesso - Motorista{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-shield-lock"></i> Ativação de Conta - Motorista
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h5><i class="bi bi-info-circle"></i> Bem-vindo ao LogiTrans!</h5>
+                        <p class="mb-0">
+                            Use as credenciais fornecidas pelo administrador para ativar sua conta.
+                            Após a ativação, você terá acesso completo ao sistema.
+                        </p>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label class="form-label">Usuário (CPF sem pontos)</label>
+                            <input type="text" class="form-control" name="username"
+                                   placeholder="Ex: 12345678901" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Senha Temporária</label>
+                            <input type="password" class="form-control" name="senha_temporaria"
+                                   placeholder="Digite a senha recebida" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Nova Senha</label>
+                            <input type="password" class="form-control" name="nova_senha"
+                                   placeholder="Mínimo 8 caracteres" minlength="8" required>
+                            <div class="form-text">Use letras, números e símbolos para maior segurança.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Confirmar Nova Senha</label>
+                            <input type="password" class="form-control" name="confirmar_senha"
+                                   placeholder="Repita a nova senha" minlength="8" required>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-circle"></i> Ativar Minha Conta
+                            </button>
+                            <a href="{% url 'login' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Voltar para Login
+                            </a>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <div class="alert alert-warning">
+                        <h6><i class="bi bi-exclamation-triangle"></i> Problemas com acesso?</h6>
+                        <p class="mb-0 small">
+                            Se você está tendo dificuldades para ativar sua conta, entre em contato com o administrador do sistema.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

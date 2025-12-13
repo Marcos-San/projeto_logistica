@@ -53,6 +53,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'logistica.middleware.ProfileRedirectMiddleware',
+    'logistica.middleware.VerificarGruposMiddleware',
+    'logistica.middleware.CriarPerfilMotoristaMiddleware',
 ]
 
 ROOT_URLCONF = 'projeto_logistica.urls'
@@ -123,6 +125,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 

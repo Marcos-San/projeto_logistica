@@ -13,11 +13,21 @@ urlpatterns = [
         'login/',
         auth_views.LoginView.as_view(
             template_name='log/login.html',
-            redirect_authenticated_user=True
+            redirect_authenticated_user=True,
+            next_page='redirecionar_perfil'
         ),
         name='login'
     ),
     path('logout/', views.custom_logout, name='logout'),
+
+    # Primeiro acesso e verificação
+    path('primeiro-acesso/', views.primeiro_acesso_motorista, name='primeiro_acesso_motorista'),
+    path('verificar-meu-grupo/', views.verificar_grupo_usuario, name='verificar_grupo_usuario'),
+    path('meu-painel/', views.painel_motorista, name='painel_motorista'),
+    path('redirecionar-perfil/', views.redirecionar_por_perfil, name='redirecionar_perfil'),
+
+    # Ferramentas admin
+    path('motoristas/verificar-todos-grupos/', views.verificar_todos_grupos, name='verificar_todos_grupos'),
 
     # BUSCA
     path('buscar_entrega/', views.buscar_entrega, name='buscar_entrega'),

@@ -1,0 +1,110 @@
+{% extends 'log/base.html' %}
+
+{% block title %}Meu Painel - Motorista{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="bi bi-speedometer2"></i> Meu Painel
+        </h1>
+        <div>
+            <a href="{% url 'verificar_grupo_usuario' %}" class="btn btn-info">
+                <i class="bi bi-shield-check"></i> Verificar Meu Acesso
+            </a>
+        </div>
+    </div>
+    
+    <!-- Status do Acesso -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="bi bi-person-check"></i> Meu Perfil</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Nome:</strong> {{ motorista.nome }}</p>
+                    <p><strong>CPF:</strong> {{ motorista.cpf }}</p>
+                    <p><strong>CNH:</strong> {{ motorista.get_cnh_display }}</p>
+                    <p><strong>Status:</strong> 
+                        <span class="badge bg-{{ motorista.status == 'ativo'|yesno:'success,info' }}">
+                            {{ motorista.get_status_display }}
+                        </span>
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Usuário:</strong> {{ user.username }}</p>
+                    <p><strong>Grupos:</strong>
+                        {% for grupo in grupos %}
+                            <span class="badge bg-info">{{ grupo }}</span>
+                        {% empty %}
+                            <span class="badge bg-warning">Sem grupos</span>
+                        {% endfor %}
+                    </p>
+                    <p><strong>Permissões:</strong> {{ permissoes_count }} configuradas</p>
+                    <p><strong>Último Login:</strong> 
+                        {% if user.last_login %}
+                            {{ user.last_login|date:"d/m/Y H:i" }}
+                        {% else %}
+                            <span class="text-muted">Primeiro acesso</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            {% if not no_grupo_motoristas %}
+            <div class="alert alert-warning mt-3">
+                <i class="bi bi-exclamation-triangle"></i>
+                <strong>Atenção:</strong> Seu usuário não está no grupo Motoristas. 
+                Algumas funcionalidades podem não estar disponíveis.
+                <a href="{% url 'verificar_grupo_usuario' %}" class="btn btn-sm btn-warning ms-2">
+                    Corrigir Agora
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Ações Rápidas -->
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-box-seam display-4 text-primary mb-3"></i>
+                    <h5>Minhas Entregas</h5>
+                    <p>Gerencie suas entregas ativas</p>
+                    <a href="{% url 'list_entrega' %}" class="btn btn-primary">
+                        Acessar <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-map display-4 text-success mb-3"></i>
+                    <h5>Minhas Rotas</h5>
+                    <p>Veja suas rotas atribuídas</p>
+                    <a href="{% url 'list_rota' %}" class="btn btn-success">
+                        Acessar <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-gear display-4 text-warning mb-3"></i>
+                    <h5>Meu Perfil</h5>
+                    <p>Atualize seus dados</p>
+                    <a href="{% url 'atualizar_motorista' motorista.id %}" class="btn btn-warning">
+                        Editar <i class="bi bi-pencil"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

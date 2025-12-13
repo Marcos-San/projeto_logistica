@@ -1,5 +1,6 @@
 # core/forms.py
 from django import forms
+from django.contrib import messages
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
 from .models import Motorista, Cliente, Veiculo, Entrega, Rota
@@ -102,7 +103,7 @@ class MotoristaForm(forms.ModelForm):
     def save(self, commit=True):
         """Salva o motorista e cria usuário se necessário"""
         motorista = super().save(commit=False)
-        criar_usuario = self.cleaned_data.get('criar_usuario')
+        criar_usuario = self.cleaned_data.get('criar_usuario', True)  # Padrão True
         email = self.cleaned_data.get('email')
 
         if commit:
@@ -110,15 +111,23 @@ class MotoristaForm(forms.ModelForm):
 
             # Criar usuário se solicitado e ainda não existir
             if criar_usuario and not motorista.user:
-                user, senha_gerada = motorista.criar_usuario()
+                try:
+                    user, senha_gerada = motorista.criar_usuario()
 
-                # Atualizar email se fornecido
-                if email:
-                    user.email = email
-                    user.save()
+                    # Atualizar email se fornecido
+                    if email:
+                        user.email = email
+                        user.save()
 
-                # Adicionar senha gerada ao contexto
-                self.senha_gerada = senha_gerada
+                    # Adicionar senha gerada ao contexto
+                    self.senha_gerada = senha_gerada
+                    print(f"✅ Usuário criado: {user.username}, Senha: {senha_gerada}")
+
+                except Exception as e:
+                    print(f"⚠️ Erro ao criar usuário: {str(e)}")
+                    # Ainda assim salvar o motorista
+                    messages.add_message(self.request, messages.WARNING,
+                                         f"Motorista salvo, mas usuário não pôde ser criado: {str(e)}")
 
         return motorista
 

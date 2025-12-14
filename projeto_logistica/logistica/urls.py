@@ -32,7 +32,7 @@ urlpatterns = [
     # BUSCA
     path('buscar_entrega/', views.buscar_entrega, name='buscar_entrega'),
 
-    # CRUD MOTORISTA (atualizadas)
+    # CRUD MOTORISTA
     path('motoristas/', views.list_motorista, name='list_motorista'),
     path('motoristas/criar/', views.criar_motorista, name='criar_motorista'),
     path('motoristas/<int:id>/', views.detalhes_motorista, name='detalhes_motorista'),

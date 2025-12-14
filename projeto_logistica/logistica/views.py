@@ -10,13 +10,13 @@ from django.db.models import Q, Sum
 from .forms import MotoristaForm, ClienteForm, VeiculoForm, EntregaForm, RotaForm, GerenciarAcessoMotoristaForm, \
     CriarUsuarioMotoristaForm
 from .models import Motorista, Cliente, Veiculo, Entrega, Rota
-from .permissions import *  # Importe as novas funções de permissão
+from .permissions import *  # Importa TODAS as funções de permissão
 from django.contrib.auth.decorators import user_passes_test
 from functools import wraps
 
 
 # ============================================
-# FUNÇÕES DE VERIFICAÇÃO DE GRUPO (SUBSTITUTAS)
+# FUNÇÕES AUXILIARES PARA VERIFICAÇÃO DE GRUPO
 # ============================================
 
 def verificar_grupo(grupo_nome):
@@ -49,57 +49,6 @@ def requer_grupo(nome_grupo, login_url='/'):
     return decorator
 
 
-# ============================================
-# VERIFICAÇÕES ESPECÍFICAS PARA SEU SISTEMA
-# ============================================
-
-def is_admin(user):
-    """Verifica se usuário é administrador"""
-    return user.is_authenticated and user.is_staff
-
-
-def is_motorista(user):
-    """Verifica se usuário é motorista"""
-    if not user.is_authenticated:
-        return False
-    # Verifica se tem perfil de motorista E está no grupo Motoristas
-    tem_perfil = hasattr(user, 'motorista')
-    no_grupo = user.groups.filter(name='Motoristas').exists()
-    return tem_perfil and no_grupo
-
-
-def is_admin_or_motorista(user):
-    """Verifica se usuário é admin ou motorista"""
-    return is_admin(user) or is_motorista(user)
-
-
-# ============================================
-# DECORATORS PRONTOS PARA USAR
-# ============================================
-
-# Use estes decorators nas suas views:
-# @admin_required
-# @motorista_required
-# @admin_or_motorista_required
-
-def admin_required(view_func):
-    """Decorator para views que requerem admin"""
-    decorated_view_func = login_required(user_passes_test(is_admin)(view_func))
-    return decorated_view_func
-
-
-def motorista_required(view_func):
-    """Decorator para views que requerem motorista"""
-    decorated_view_func = login_required(user_passes_test(is_motorista)(view_func))
-    return decorated_view_func
-
-
-def admin_or_motorista_required(view_func):
-    """Decorator para views que requerem admin OU motorista"""
-    decorated_view_func = login_required(user_passes_test(is_admin_or_motorista)(view_func))
-    return decorated_view_func
-
-
 def grupo_required(grupo_nome):
     """Decorator compatível com o antigo group_required"""
 
@@ -121,10 +70,6 @@ def grupo_required(grupo_nome):
     return decorator
 
 
-# ============================================
-# FUNÇÕES AUXILIARES PARA PERMISSÕES
-# ============================================
-
 def is_in_group(user, group_name):
     """Verifica se usuário está em um grupo específico"""
     return user.groups.filter(name=group_name).exists()
@@ -143,16 +88,17 @@ def home(request):
     if not request.user.is_authenticated:
         return render(request, 'log/home.html', {})
 
-    # Verificar se é motorista (tem perfil de motorista)
-    try:
-        if hasattr(request.user, 'motorista'):
-            # Redirecionar motoristas para seu painel
-            return redirect('list_entrega')  # Ou para 'painel_motorista'
-    except:
-        pass
+    print(f"🔍 DEBUG home: Usuário {request.user.username}")
+    print(f"🔍 DEBUG home: hasattr motorista_profile: {hasattr(request.user, 'motorista_profile')}")
+
+    # Obter motorista CORRETAMENTE
+    motorista = get_motorista_from_user(request.user)
+    if motorista:
+        print(f"✅ Home: Motorista detectado: {motorista.nome}")
 
     # Para usuários autenticados, mostrar dashboard apropriado
     if request.user.is_staff:
+        print(f"👑 Home: É administrador")
         # Admin vê todas as estatísticas
         context = {
             'total_entregas': Entrega.objects.count(),
@@ -168,16 +114,16 @@ def home(request):
             'entregas_recentes': Entrega.objects.all().select_related('cliente', 'motorista', 'rota').order_by(
                 '-data_solicitacao')[:10],
         }
-    elif hasattr(request.user, 'motorista'):
+    elif motorista:
+        print(f"🚚 Home: É motorista {motorista.nome}")
         # Motorista vê apenas suas estatísticas
-        motorista = request.user.motorista
         context = {
             'total_entregas': Entrega.objects.filter(motorista=motorista).count(),
             'entregas_pendentes': Entrega.objects.filter(motorista=motorista, status='pendente').count(),
             'entregas_em_transito': Entrega.objects.filter(motorista=motorista, status='em_transito').count(),
             'entregas_entregues': Entrega.objects.filter(motorista=motorista, status='entregue').count(),
             'entregas_sem_rota': Entrega.objects.filter(motorista=motorista, rota__isnull=True).count(),
-            'total_motoristas': 1,  # Apenas ele mesmo
+            'total_motoristas': 1,
             'motoristas_disponiveis': 1 if motorista.status == 'disponivel' else 0,
             'total_veiculos': Veiculo.objects.filter(motorista=motorista).count(),
             'veiculos_disponiveis': Veiculo.objects.filter(motorista=motorista, status='disponivel').count(),
@@ -187,8 +133,8 @@ def home(request):
                 '-data_solicitacao')[:10],
         }
     else:
+        print(f"👤 Home: Usuário comum")
         # Usuário comum autenticado (sem perfil específico)
-        # Se chegou aqui e não é admin nem motorista, mostrar página básica
         context = {
             'total_entregas': 0,
             'entregas_pendentes': 0,
@@ -202,7 +148,6 @@ def home(request):
             'rotas_ativas': 0,
             'entregas_recentes': [],
         }
-        # Remover a mensagem de erro ou mudar para informativa
         messages.info(request, 'Bem-vindo ao sistema LogiTrans. Use o campo acima para rastrear entregas.')
 
     return render(request, 'log/home.html', context)
@@ -218,8 +163,15 @@ def redirecionar_por_perfil(request):
         return redirect('home')
 
     # Se for motorista
-    if hasattr(request.user, 'motorista'):
+    print(f"DEBUG: Usuário {request.user.username} fazendo redirecionamento")
+    print(f"DEBUG: is_staff: {request.user.is_staff}")
+
+    motorista = get_motorista_from_user(request.user)
+    if motorista:
+        print(f"DEBUG: Encontrado motorista: {motorista.nome}")
         return redirect('list_entrega')
+
+    print(f"DEBUG: Não é motorista")
 
     # Para outros usuários (clientes)
     return redirect('home')
@@ -255,7 +207,7 @@ def buscar_entrega(request):
 # CRUD MOTORISTA -------------------------------------
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(lambda u: is_admin(u))
 def list_motorista(request):
     """Lista todos os motoristas com informações de acesso - Apenas Administradores"""
     motoristas = Motorista.objects.all().order_by('nome')
@@ -275,7 +227,7 @@ def list_motorista(request):
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(lambda u: is_admin(u))
 def criar_motorista(request):
     """Criar novo motorista com usuário de acesso - Apenas Administradores"""
     senha_gerada = None
@@ -351,7 +303,7 @@ def detalhes_motorista(request, id):
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(lambda u: is_admin(u))
 def gerenciar_acesso_motorista(request, id):
     """Gerenciar acesso do motorista ao sistema - Apenas Administradores"""
     motorista = get_object_or_404(Motorista, id=id)
@@ -452,7 +404,7 @@ def gerenciar_acesso_motorista(request, id):
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(lambda u: is_admin(u))
 def criar_usuario_motorista(request, id):
     """Criar usuário para motorista existente - Apenas Administradores"""
     motorista = get_object_or_404(Motorista, id=id)
@@ -516,7 +468,7 @@ def criar_usuario_motorista(request, id):
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(lambda u: is_admin(u))
 def verificar_grupos_motoristas(request):
     """Verifica e corrige os grupos dos motoristas - Apenas Administradores"""
     try:
@@ -589,7 +541,8 @@ def primeiro_acesso_motorista(request):
             return render(request, 'log/primeiro_acesso.html')
 
         # Verificar se é motorista
-        if not hasattr(user, 'motorista'):
+        motorista = get_motorista_from_user(user)
+        if not motorista:
             messages.error(request, 'Este usuário não é um motorista.')
             return render(request, 'log/primeiro_acesso.html')
 
@@ -619,8 +572,9 @@ def primeiro_acesso_motorista(request):
 def verificar_grupo_usuario(request):
     """Permite usuário verificar e corrigir seu próprio grupo"""
     user = request.user
+    motorista = get_motorista_from_user(user)
 
-    if hasattr(user, 'motorista'):
+    if motorista:
         grupo_motorista, created = Group.objects.get_or_create(name='Motoristas')
 
         if created:
@@ -675,14 +629,14 @@ def verificar_todos_grupos(request):
 
 
 @login_required
-@user_passes_test(is_motorista)
+@user_passes_test(lambda u: is_motorista(u))
 def painel_motorista(request):
     """Painel personalizado para motoristas"""
-    if not hasattr(request.user, 'motorista'):
+    motorista = get_motorista_from_user(request.user)
+
+    if not motorista:
         messages.error(request, 'Acesso restrito a motoristas.')
         return redirect('home')
-
-    motorista = request.user.motorista
 
     # Garantir grupo
     grupo_motorista, _ = Group.objects.get_or_create(name='Motoristas')
@@ -735,7 +689,7 @@ def atualizar_motorista(request, id):
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(lambda u: is_admin(u))
 def deletar_motorista(request, id):
     """Deletar motorista - Apenas Administradores"""
     motorista = get_object_or_404(Motorista, id=id)
@@ -748,7 +702,7 @@ def deletar_motorista(request, id):
 # CRUD CLIENTE -------------------------------------
 
 @login_required
-@user_passes_test(is_admin_or_motorista)
+@user_passes_test(lambda u: is_admin_or_motorista(u))
 def list_cliente(request):
     """Lista todos os clientes - Administradores ou Motoristas"""
     clientes = Cliente.objects.all().order_by('nome')
@@ -760,7 +714,7 @@ def list_cliente(request):
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(lambda u: is_admin(u))
 def criar_cliente(request):
     """Criar novo cliente - Apenas Administradores"""
     if request.method == 'POST':
@@ -779,7 +733,7 @@ def criar_cliente(request):
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(lambda u: is_admin(u))
 def atualizar_cliente(request, id):
     """Atualizar cliente existente - Apenas Administradores"""
     cliente = get_object_or_404(Cliente, id=id)
@@ -803,7 +757,7 @@ def atualizar_cliente(request, id):
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(lambda u: is_admin(u))
 def deletar_cliente(request, id):
     """Deletar cliente - Apenas Administradores"""
     cliente = get_object_or_404(Cliente, id=id)
@@ -816,17 +770,18 @@ def deletar_cliente(request, id):
 # CRUD VEÍCULO -------------------------------------
 
 @login_required
-@user_passes_test(is_admin_or_motorista)
+@user_passes_test(lambda u: is_admin_or_motorista(u))
 def list_veiculo(request):
     """Lista todos os veículos - Administradores ou Motoristas"""
     if request.user.is_staff:
         veiculos = Veiculo.objects.all().select_related('motorista').order_by('placa')
-    elif hasattr(request.user, 'motorista'):
-        # Motorista vê apenas veículos associados a ele
-        veiculos = Veiculo.objects.filter(motorista=request.user.motorista).select_related('motorista').order_by(
-            'placa')
     else:
-        veiculos = Veiculo.objects.none()
+        motorista = get_motorista_from_user(request.user)
+        if motorista:
+            # Motorista vê apenas veículos associados a ele
+            veiculos = Veiculo.objects.filter(motorista=motorista).select_related('motorista').order_by('placa')
+        else:
+            veiculos = Veiculo.objects.none()
 
     context = {
         'veiculos': veiculos,
@@ -836,7 +791,7 @@ def list_veiculo(request):
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(lambda u: is_admin(u))
 def criar_veiculo(request):
     """Criar novo veículo - Apenas Administradores"""
     if request.method == 'POST':
@@ -855,7 +810,7 @@ def criar_veiculo(request):
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(lambda u: is_admin(u))
 def atualizar_veiculo(request, id):
     """Atualizar veículo existente - Apenas Administradores"""
     veiculo = get_object_or_404(Veiculo, id=id)
@@ -879,7 +834,7 @@ def atualizar_veiculo(request, id):
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(lambda u: is_admin(u))
 def deletar_veiculo(request, id):
     """Deletar veículo - Apenas Administradores"""
     veiculo = get_object_or_404(Veiculo, id=id)
@@ -892,29 +847,47 @@ def deletar_veiculo(request, id):
 # CRUD ENTREGA -------------------------------------
 
 @login_required
-@user_passes_test(is_admin_or_motorista)
+@user_passes_test(lambda u: is_admin_or_motorista(u))
 def list_entrega(request):
     """Lista todas as entregas - Administradores ou Motoristas"""
+    print(f"🔍 DEBUG list_entrega: Usuário {request.user.username}")
+    print(f"🔍 DEBUG list_entrega: is_staff: {request.user.is_staff}")
+    print(f"🔍 DEBUG list_entrega: is_motorista: {is_motorista(request.user)}")
+    print(f"🔍 DEBUG list_entrega: is_admin_or_motorista: {is_admin_or_motorista(request.user)}")
+
+    # Obter motorista CORRETAMENTE
+    motorista = get_motorista_from_user(request.user)
+    if motorista:
+        print(f"✅ Motorista obtido: {motorista.nome}")
+
+    # Se for admin, mostra todas as entregas
     if request.user.is_staff:
         entregas = Entrega.objects.all().select_related('cliente', 'motorista', 'rota').order_by('-data_solicitacao')
-    elif hasattr(request.user, 'motorista'):
-        # Motorista vê apenas suas entregas
-        entregas = Entrega.objects.filter(motorista=request.user.motorista).select_related('cliente', 'motorista',
-                                                                                           'rota').order_by(
+        print(f"👑 Admin vendo TODAS as entregas: {entregas.count()}")
+
+    # Se for motorista, mostra apenas suas entregas
+    elif motorista:
+        entregas = Entrega.objects.filter(motorista=motorista).select_related('cliente', 'motorista', 'rota').order_by(
             '-data_solicitacao')
+        print(f"🚚 Motorista {motorista.nome} vendo SUAS entregas: {entregas.count()}")
+
+    # Não deveria chegar aqui por causa do decorator
     else:
-        entregas = Entrega.objects.none()
+        print(f"❌ ERRO: Usuário não é admin nem motorista, mas passou no decorator!")
+        messages.error(request, 'Acesso negado. Você precisa ser motorista ou administrador.')
+        return redirect('home')
 
     context = {
         'entregas': entregas,
         'total': entregas.count(),
         'sem_rota': entregas.filter(rota__isnull=True).count(),
+        'motorista_atual': motorista,
     }
     return render(request, 'log/list_entrega.html', context)
 
 
 @login_required
-@user_passes_test(is_admin_or_motorista)
+@user_passes_test(lambda u: is_admin_or_motorista(u))
 def criar_entrega(request):
     """Criar nova entrega - Administradores ou Motoristas"""
     if request.method == 'POST':
@@ -922,8 +895,9 @@ def criar_entrega(request):
         if form.is_valid():
             entrega = form.save(commit=False)
             # Se for motorista, atribuir automaticamente a ele
-            if hasattr(request.user, 'motorista') and not entrega.motorista:
-                entrega.motorista = request.user.motorista
+            motorista = get_motorista_from_user(request.user)
+            if motorista and not entrega.motorista:
+                entrega.motorista = motorista
             entrega.save()
             messages.success(request, f'Entrega "{entrega.codigo_rastreio}" registrada com sucesso!')
             return redirect('list_entrega')
@@ -937,7 +911,7 @@ def criar_entrega(request):
 
 
 @login_required
-@user_passes_test(is_admin_or_motorista)
+@user_passes_test(lambda u: is_admin_or_motorista(u))
 def atualizar_entrega(request, id):
     """Atualizar entrega existente - Administradores ou Motoristas (apenas suas)"""
     entrega = get_object_or_404(Entrega, id=id)
@@ -951,8 +925,9 @@ def atualizar_entrega(request, id):
         form = EntregaForm(request.POST, instance=entrega)
         if form.is_valid():
             # Se for motorista, garantir que a entrega continue sendo dele
-            if hasattr(request.user, 'motorista') and not request.user.is_staff:
-                form.instance.motorista = request.user.motorista
+            motorista = get_motorista_from_user(request.user)
+            if motorista and not request.user.is_staff:
+                form.instance.motorista = motorista
 
             # Verificar mudança de rota
             nova_rota = form.cleaned_data.get('rota')
@@ -977,7 +952,7 @@ def atualizar_entrega(request, id):
 
 
 @login_required
-@user_passes_test(is_admin_or_motorista)
+@user_passes_test(lambda u: is_admin_or_motorista(u))
 def deletar_entrega(request, id):
     """Deletar entrega - Administradores ou Motoristas (apenas suas)"""
     entrega = get_object_or_404(Entrega, id=id)
@@ -996,19 +971,28 @@ def deletar_entrega(request, id):
 # CRUD ROTA -------------------------------------
 
 @login_required
-@user_passes_test(is_admin_or_motorista)
+@user_passes_test(lambda u: is_admin_or_motorista(u))
 def list_rota(request):
     """Lista todas as rotas - Administradores ou Motoristas"""
+    print(f"🔍 DEBUG list_rota: Usuário {request.user.username}")
+    print(f"🔍 DEBUG list_rota: is_staff: {request.user.is_staff}")
+    print(f"🔍 DEBUG list_rota: is_motorista: {is_motorista(request.user)}")
+
     if request.user.is_staff:
         rotas = Rota.objects.all().select_related('motorista', 'veiculo').prefetch_related('entregas').order_by(
             '-data_rota')
-    elif hasattr(request.user, 'motorista'):
-        # Motorista vê apenas suas rotas
-        rotas = Rota.objects.filter(motorista=request.user.motorista).select_related('motorista',
-                                                                                     'veiculo').prefetch_related(
-            'entregas').order_by('-data_rota')
+        print(f"👑 Admin vendo TODAS as rotas: {rotas.count()}")
     else:
-        rotas = Rota.objects.none()
+        motorista = get_motorista_from_user(request.user)
+        if motorista:
+            # Motorista vê apenas suas rotas
+            rotas = Rota.objects.filter(motorista=motorista).select_related('motorista',
+                                                                            'veiculo').prefetch_related(
+                'entregas').order_by('-data_rota')
+            print(f"🚚 Motorista {motorista.nome} vendo SUAS rotas: {rotas.count()}")
+        else:
+            rotas = Rota.objects.none()
+            print(f"❌ Usuário sem perfil de motorista")
 
     context = {
         'rotas': rotas,
@@ -1018,7 +1002,7 @@ def list_rota(request):
 
 
 @login_required
-@user_passes_test(is_admin_or_motorista)
+@user_passes_test(lambda u: is_admin_or_motorista(u))
 def lista_entregas(request, rota_id):
     """Lista entregas de uma rota específica - Administradores ou Motoristas (apenas suas)"""
     rota = get_object_or_404(Rota, id=rota_id)
@@ -1033,14 +1017,16 @@ def lista_entregas(request, rota_id):
     # Filtrar entregas disponíveis conforme permissão
     if request.user.is_staff:
         entregas_disponiveis = Entrega.objects.filter(rota__isnull=True, status='pendente').select_related('cliente')
-    elif hasattr(request.user, 'motorista'):
-        entregas_disponiveis = Entrega.objects.filter(
-            rota__isnull=True,
-            status='pendente',
-            motorista=request.user.motorista
-        ).select_related('cliente')
     else:
-        entregas_disponiveis = Entrega.objects.none()
+        motorista = get_motorista_from_user(request.user)
+        if motorista:
+            entregas_disponiveis = Entrega.objects.filter(
+                rota__isnull=True,
+                status='pendente',
+                motorista=motorista
+            ).select_related('cliente')
+        else:
+            entregas_disponiveis = Entrega.objects.none()
 
     context = {
         'rota': rota,
@@ -1055,7 +1041,7 @@ def lista_entregas(request, rota_id):
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(lambda u: is_admin(u))
 def criar_rota(request):
     """Criar nova rota - Apenas Administradores"""
     if request.method == 'POST':
@@ -1084,7 +1070,7 @@ def criar_rota(request):
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(lambda u: is_admin(u))
 def atualizar_rota(request, id):
     """Atualizar rota existente - Apenas Administradores"""
     rota = get_object_or_404(Rota, id=id)
@@ -1118,7 +1104,7 @@ def atualizar_rota(request, id):
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(lambda u: is_admin(u))
 def deletar_rota(request, id):
     """Deletar rota - Apenas Administradores"""
     rota = get_object_or_404(Rota, id=id)
@@ -1145,7 +1131,7 @@ def deletar_rota(request, id):
 
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(lambda u: is_admin(u))
 def adicionar_entrega_rota(request, rota_id):
     """Adicionar entrega a uma rota - Apenas Administradores"""
     rota = get_object_or_404(Rota, id=rota_id)
@@ -1174,7 +1160,7 @@ def adicionar_entrega_rota(request, rota_id):
 
 
 @login_required
-@user_passes_test(is_admin_or_motorista)
+@user_passes_test(lambda u: is_admin_or_motorista(u))
 def remover_entrega_rota(request, entrega_id):
     """Remover entrega de uma rota - Administradores ou Motoristas (apenas suas entregas)"""
     entrega = get_object_or_404(Entrega, id=entrega_id)

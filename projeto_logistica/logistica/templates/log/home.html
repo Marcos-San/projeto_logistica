@@ -21,45 +21,48 @@
 </section>
 
 {% if user.is_authenticated %}
-<section class="features">
-    <div class="container">
-        <h2>Dashboard Rápido</h2>
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h3>{{ total_entregas|default:0 }}</h3>
-                <p>Total de Entregas</p>
-            </div>
-            <div class="stat-card">
-                <h3>{{ entregas_pendentes|default:0 }}</h3>
-                <p>Pendentes</p>
-            </div>
-            <div class="stat-card">
-                <h3>{{ entregas_em_transito|default:0 }}</h3>
-                <p>Em Trânsito</p>
-            </div>
-            <div class="stat-card">
-                <h3>{{ entregas_entregues|default:0 }}</h3>
-                <p>Entregues</p>
-            </div>
-            <div class="stat-card">
-                <h3>{{ entregas_sem_rota|default:0 }}</h3>
-                <p>Sem Rota</p>
-            </div>
-            <div class="stat-card">
-                <h3>{{ motoristas_disponiveis|default:0 }}</h3>
-                <p>Motoristas Disponíveis</p>
-            </div>
-            <div class="stat-card">
-                <h3>{{ veiculos_disponiveis|default:0 }}</h3>
-                <p>Veículos Disponíveis</p>
-            </div>
-            <div class="stat-card">
-                <h3>{{ rotas_ativas|default:0 }}</h3>
-                <p>Rotas Ativas</p>
+{% if user.is_staff %}
+    <section class="features">
+        <div class="container">
+            <h2>Dashboard Rápido</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>{{ total_entregas|default:0 }}</h3>
+                    <p>Total de Entregas</p>
+                </div>
+                <div class="stat-card">
+                    <h3>{{ entregas_pendentes|default:0 }}</h3>
+                    <p>Pendentes</p>
+                </div>
+                <div class="stat-card">
+                    <h3>{{ entregas_em_transito|default:0 }}</h3>
+                    <p>Em Trânsito</p>
+                </div>
+                <div class="stat-card">
+                    <h3>{{ entregas_entregues|default:0 }}</h3>
+                    <p>Entregues</p>
+                </div>
+                <div class="stat-card">
+                    <h3>{{ entregas_sem_rota|default:0 }}</h3>
+                    <p>Sem Rota</p>
+                </div>
+                <div class="stat-card">
+                    <h3>{{ motoristas_disponiveis|default:0 }}</h3>
+                    <p>Motoristas Disponíveis</p>
+                </div>
+                <div class="stat-card">
+                    <h3>{{ veiculos_disponiveis|default:0 }}</h3>
+                    <p>Veículos Disponíveis</p>
+                </div>
+                <div class="stat-card">
+                    <h3>{{ rotas_ativas|default:0 }}</h3>
+                    <p>Rotas Ativas</p>
+                </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
+{% endif %}
+{% endif %}
 
 <!-- Entregas Recentes -->
 {% if entregas_recentes %}
@@ -116,6 +119,8 @@
 </section>
 {% endif %}
 
+{% if user.is_authenticated %}
+{% if user.is_staff %}
 <section class="dashboard-preview">
     <div class="container">
         <h2>Recursos do Sistema</h2>
@@ -159,5 +164,6 @@
         </div>
     </div>
 </section>
+{% endif %}
 {% endif %}
 {% endblock %}

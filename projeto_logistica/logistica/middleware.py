@@ -13,7 +13,7 @@ class ProfileRedirectMiddleware:
         response = self.get_response(request)
 
         # Redirecionar após login baseado no perfil
-        if request.user.is_authenticated and request.path == reverse('home'):
+        if request.user.is_authenticated and request.path == '/' or request.path == '/home/':
             if hasattr(request.user, 'motorista') and not request.user.is_staff:
                 # Motorista é redirecionado para suas entregas
                 return redirect('list_entrega')

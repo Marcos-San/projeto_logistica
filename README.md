@@ -26,7 +26,7 @@ Funcionalidades Principais -
 
 Pré-requisitos
 
-* Python 3.10 ou superior
+* Python 3.13
 * asgiref==3.11.0
 * Django==5.2.8
 * django-crispy-forms==2.5

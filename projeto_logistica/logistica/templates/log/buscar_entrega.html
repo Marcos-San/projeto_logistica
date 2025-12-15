@@ -27,6 +27,7 @@
                             <th>Status</th>
                             <th>Data de solicitação</th>
                             <th>Data prevista para entrega</th>
+                            <th>Observações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -36,6 +37,7 @@
                             <td>{{ resultado.status }}</td>
                             <td>{{ resultado.data_solicitacao }}</td>
                             <td>{{ resultado.data_entrega_prevista }}</td>
+                            <td>{{ resultado.obs }}</td>
                         </tr>
         {% else %}
             <p>Nenhum entrega encontrada.</p>

@@ -1,6 +1,4 @@
-# projeto_logistica
-
-Sistema de Gerenciamento de Logística e Entregas
+# Sistema de Gerenciamento de Logística e Entregas
 
 📋 Descrição do Sistema 
 Sistema completo de gerenciamento de logística desenvolvido em Django para empresas regionais que realizam entregas para diversos clientes (e-commerce, farmácias, restaurantes). 

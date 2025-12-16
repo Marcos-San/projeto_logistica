@@ -106,56 +106,60 @@
     </div>
 </section>
 
-<!-- Adicionar Entrega à Rota -->
-{% if entregas_disponiveis and rota.status != 'concluida' %}
-<section class="page-section">
-    <div class="container">
-        <div class="form-card">
-            <h2>➕ Adicionar Entrega à Rota</h2>
-            <form method="post" action="{% url 'adicionar_entrega_rota' rota.id %}" class="form-styled">
-                {% csrf_token %}
-                <div style="display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: end;">
-                    <div class="form-group">
-                        <label for="entrega_id" class="form-label">Selecione uma entrega disponível:</label>
-                        <select name="entrega_id" id="entrega_id" class="form-control" required>
-                            <option value="">Escolha uma entrega...</option>
-                            {% for entrega in entregas_disponiveis %}
-                                <option value="{{ entrega.id }}" data-capacidade="{{ entrega.capacidade_necessaria }}">
-                                    {{ entrega.codigo_rastreio }} - {{ entrega.cliente.nome }}
-                                    ({{ entrega.capacidade_necessaria }} kg) -
-                                    De: {{ entrega.endereco_origem|truncatewords:3 }}
-                                    Para: {{ entrega.endereco_destino|truncatewords:3 }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                        <small style="color: #666; margin-top: 0.5rem; display: block;">
-                            💡 Apenas entregas sem rota e com status "pendente" aparecem aqui.
-                        </small>
+{% if user.is_authenticated %}
+{% if user.is_staff %}
+    <!-- Adicionar Entrega à Rota -->
+    {% if entregas_disponiveis and rota.status != 'concluida' %}
+    <section class="page-section">
+        <div class="container">
+            <div class="form-card">
+                <h2>➕ Adicionar Entrega à Rota</h2>
+                <form method="post" action="{% url 'adicionar_entrega_rota' rota.id %}" class="form-styled">
+                    {% csrf_token %}
+                    <div style="display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: end;">
+                        <div class="form-group">
+                            <label for="entrega_id" class="form-label">Selecione uma entrega disponível:</label>
+                            <select name="entrega_id" id="entrega_id" class="form-control" required>
+                                <option value="">Escolha uma entrega...</option>
+                                {% for entrega in entregas_disponiveis %}
+                                    <option value="{{ entrega.id }}" data-capacidade="{{ entrega.capacidade_necessaria }}">
+                                        {{ entrega.codigo_rastreio }} - {{ entrega.cliente.nome }}
+                                        ({{ entrega.capacidade_necessaria }} kg) -
+                                        De: {{ entrega.endereco_origem|truncatewords:3 }}
+                                        Para: {{ entrega.endereco_destino|truncatewords:3 }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <small style="color: #666; margin-top: 0.5rem; display: block;">
+                                💡 Apenas entregas sem rota e com status "pendente" aparecem aqui.
+                            </small>
+                        </div>
+                        <button type="submit" class="btn-primary">
+                            ➕ Adicionar à Rota
+                        </button>
                     </div>
-                    <button type="submit" class="btn-primary">
-                        ➕ Adicionar à Rota
-                    </button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
-    </div>
-</section>
-{% elif rota.status == 'concluida' %}
-<section class="page-section">
-    <div class="container">
-        <div class="alert alert-info">
-            ℹ️ Esta rota está concluída. Não é possível adicionar mais entregas.
+    </section>
+    {% elif rota.status == 'concluida' %}
+    <section class="page-section">
+        <div class="container">
+            <div class="alert alert-info">
+                ℹ️ Esta rota está concluída. Não é possível adicionar mais entregas.
+            </div>
         </div>
-    </div>
-</section>
-{% else %}
-<section class="page-section">
-    <div class="container">
-        <div class="alert alert-warning">
-            ℹ️ Não há entregas disponíveis para adicionar. Todas as entregas pendentes já estão em rotas.
+    </section>
+    {% else %}
+    <section class="page-section">
+        <div class="container">
+            <div class="alert alert-warning">
+                ℹ️ Não há entregas disponíveis para adicionar. Todas as entregas pendentes já estão em rotas.
+            </div>
         </div>
-    </div>
-</section>
+    </section>
+    {% endif %}
+{% endif %}
 {% endif %}
 
 <!-- Lista de Entregas da Rota -->
@@ -215,13 +219,17 @@
                                    title="Editar">
                                     ✏️ Editar
                                 </a>
-                                {% if rota.status != 'concluida' %}
-                                <a href="{% url 'remover_entrega_rota' entrega.id %}"
-                                   class="btn-action btn-delete"
-                                   title="Remover da Rota"
-                                   onclick="return confirm('Remover esta entrega da rota?')">
-                                    🗑️ Remover
-                                </a>
+                                {% if user.is_authenticated %}
+                                {% if user.is_staff %}
+                                    {% if rota.status != 'concluida' %}
+                                    <a href="{% url 'remover_entrega_rota' entrega.id %}"
+                                       class="btn-action btn-delete"
+                                       title="Remover da Rota"
+                                       onclick="return confirm('Remover esta entrega da rota?')">
+                                        🗑️ Remover
+                                    </a>
+                                    {% endif %}
+                                {% endif %}
                                 {% endif %}
                             </div>
                         </td>

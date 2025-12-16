@@ -7,8 +7,12 @@
     <div class="container">
         <div class="hero-content">
             <h1>🗺️ Rotas</h1>
-            <p>Registro e gerenciamento de rotas ({{ total|default:0 }} total)</p>
-            <a href="{% url 'criar_rota' %}" class="btn-primary">+ Registrar Rota</a>
+            {% if user.is_authenticated %}
+            {% if user.is_staff %}
+                <p>Registro e gerenciamento de rotas ({{ total|default:0 }} total)</p>
+                <a href="{% url 'criar_rota' %}" class="btn-primary">+ Registrar Rota</a>
+            {% endif %}
+            {% endif %}
         </div>
     </div>
 </section>
@@ -88,17 +92,21 @@
                                    title="Ver Entregas">
                                     📦 Entregas
                                 </a>
-                                <a href="{% url 'atualizar_rota' rota.id %}"
-                                   class="btn-action btn-edit"
-                                   title="Editar">
-                                    ✏️ Editar
-                                </a>
-                                <a href="{% url 'deletar_rota' rota.id %}"
-                                   class="btn-action btn-delete"
-                                   title="Deletar"
-                                   onclick="return confirm('Tem certeza que deseja deletar esta rota?\n\nAs entregas serão liberadas e poderão ser adicionadas em outras rotas.')">
-                                    🗑️ Deletar
-                                </a>
+                                {% if user.is_authenticated %}
+                                    {% if user.is_staff %}
+                                        <a href="{% url 'atualizar_rota' rota.id %}"
+                                           class="btn-action btn-edit"
+                                           title="Editar">
+                                            ✏️ Editar
+                                        </a>
+                                        <a href="{% url 'deletar_rota' rota.id %}"
+                                           class="btn-action btn-delete"
+                                           title="Deletar"
+                                           onclick="return confirm('Tem certeza que deseja deletar esta rota?\n\nAs entregas serão liberadas e poderão ser adicionadas em outras rotas.')">
+                                            🗑️ Deletar
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
                             </div>
                         </td>
                     </tr>

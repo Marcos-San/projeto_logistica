@@ -7,15 +7,17 @@
     <div class="container">
         <div class="hero-content">
             <h1>Bem-vindo ao LogiTrans</h1>
-            <p>Rastrear entrega</p>
-            <div class="search-box">
-                <form action="{% url 'buscar_entrega' %}" method="get" class="form-styled">
-                    <div class="form-actions">
-                        <input type="text" name="pesquisa" class="search-input" placeholder="Digite o código de rastreamento" required>
-                        <button type="submit" class="btn-submit">Consultar</button>
-                    </div>
-                </form>
-            </div>
+            <p>Rastreie sua entrega em tempo real</p>
+            <form action="{% url 'buscar_entrega' %}" method="get" class="search-box">
+                <input type="text"
+                       name="pesquisa"
+                       class="search-input"
+                       placeholder="Digite o código de rastreamento"
+                       required>
+                <button type="submit" class="btn-primary">
+                    🔍 Consultar
+                </button>
+            </form>
         </div>
     </div>
 </section>

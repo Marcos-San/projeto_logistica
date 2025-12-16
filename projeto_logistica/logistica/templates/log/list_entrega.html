@@ -7,8 +7,12 @@
     <div class="container">
         <div class="hero-content">
             <h1>📦 Entregas</h1>
-            <p>Cadastro e gerenciamento de entregas ({{ total|default:0 }} total | {{ sem_rota|default:0 }} sem rota)</p>
-            <a href="{% url 'criar_entrega' %}" class="btn-primary">+ Cadastrar Entrega</a>
+            {% if user.is_authenticated %}
+            {% if user.is_staff %}
+                <p>Cadastro e gerenciamento de entregas ({{ total|default:0 }} total | {{ sem_rota|default:0 }} sem rota)</p>
+                <a href="{% url 'criar_entrega' %}" class="btn-primary">+ Cadastrar Entrega</a>
+            {% endif %}
+            {% endif %}
         </div>
     </div>
 </section>
@@ -84,20 +88,24 @@
                                    title="Editar">
                                     ✏️ Editar
                                 </a>
-                                {% if entrega.rota %}
-                                <a href="{% url 'remover_entrega_rota' entrega.id %}"
-                                   class="btn-action btn-warning"
-                                   title="Remover da Rota"
-                                   onclick="return confirm('Remover entrega da rota?')">
-                                    🔗 Remover Rota
-                                </a>
+                                {% if user.is_authenticated %}
+                                    {% if user.is_staff %}
+                                        {% if entrega.rota %}
+                                            <a href="{% url 'remover_entrega_rota' entrega.id %}"
+                                               class="btn-action btn-warning"
+                                               title="Remover da Rota"
+                                               onclick="return confirm('Remover entrega da rota?')">
+                                                🔗 Remover Rota
+                                            </a>
+                                        {% endif %}
+                                        <a href="{% url 'deletar_entrega' entrega.id %}"
+                                           class="btn-action btn-delete"
+                                           title="Deletar"
+                                           onclick="return confirm('Tem certeza que deseja deletar esta entrega?')">
+                                            🗑️ Deletar
+                                        </a>
+                                    {% endif %}
                                 {% endif %}
-                                <a href="{% url 'deletar_entrega' entrega.id %}"
-                                   class="btn-action btn-delete"
-                                   title="Deletar"
-                                   onclick="return confirm('Tem certeza que deseja deletar esta entrega?')">
-                                    🗑️ Deletar
-                                </a>
                             </div>
                         </td>
                     </tr>

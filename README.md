@@ -4,7 +4,22 @@
 Sistema completo de gerenciamento de logística desenvolvido em Django para empresas regionais que realizam entregas para diversos clientes (e-commerce, farmácias, restaurantes). 
 O sistema permite o controle total de entregas, motoristas, veículos e rotas otimizadas.
 
-Funcionalidades Principais -
+## Índice
+- <a href="#funcionalidades-">Funcionalidades Principais</a>
+- <a href="#tecnologias-utilizadas">Tecnologias Utilizadas</a>
+- <a href="#instalação">Instalação</a>
+- <a href="#configuração-do-banco-de-dados">Configuração do banco de dados</a>
+- <a href="#"></a>
+- <a href="#"></a>
+- <a href="#"></a>
+- <a href="#"></a>
+- <a href="#"></a>
+- <a href="#"></a>
+- <a href="#"></a>
+
+
+
+## Funcionalidades Principais -
 
 * Autenticação e Autorização: Sistema com dois perfis (Administrador e Motorista) com permissões diferenciadas 
 * Gestão de Entregas: Cadastro, acompanhamento e atualização de status de entregas

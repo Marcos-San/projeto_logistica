@@ -146,6 +146,50 @@ http://localhost:8000/admin/
 
 - Rastrear entrega pelo código de rastreio
 
+---
+
+## 🌐 API REST – Sistema de Logística (Django REST Framework)
+
+O projeto disponibiliza uma API RESTful completa, desenvolvida com Django REST Framework (DRF), permitindo integração com aplicações externas como:
+
+* Frontends SPA (React, Vue, Angular)
+
+* Aplicativos Mobile
+
+* Sistemas de terceiros (ERP, marketplaces, etc.)
+
+A API é independente do frontend HTML, seguindo o padrão backend desacoplado.
+
+### 🔑 Autenticação da API
+
+A API utiliza autenticação baseada no sistema padrão do Django.
+
+```bash
+# Autenticação via navegador
+http://127.0.0.1:8000/api-auth/login/
+```
+
+⚠️ É necessário estar autenticado para acessar a maioria dos endpoints.
+
+## 📌 Base URL da API
+
+```bash
+http://127.0.0.1:8000/api/
+```
+
+### 🔁 Endpoints REST – CRUD Básico
+
+
+Cada entidade principal possui os métodos HTTP padrão:
+
+| Entidade   | Endpoint              | Métodos                 |
+| ---------- | --------------------- | ----------------------- |
+| Clientes   | `/api/clientes/`      | GET, POST               |
+| Motoristas | `/api/motoristas/`    | GET, POST               |
+| Veículos   | `/api/veiculos/`      | GET, POST               |
+| Entregas   | `/api/entregas/`      | GET, POST               |
+| Rotas      | `/api/rotas/`         | GET, POST               |
+
 
 ---
 

@@ -247,3 +247,17 @@ def user_is_motorista(user):
 def user_is_admin_or_motorista(user):
     """Função simplificada para uso em templates"""
     return is_admin_or_motorista(user)
+
+class IsAdmin(BasePermission):
+    def has_permission(self, request, view=None):
+        return (
+            request.user.is_authenticated and
+            request.user.groups.filter(name='Administradores').exists()
+        )
+
+
+class ReadOnlyOrAdmin(BasePermission):
+    def has_permission(self, request, view=None):
+        if request.method in ['GET', 'HEAD', 'OPTIONS']:
+            return request.user.is_authenticated
+        return request.user.groups.filter(name='Administradores').exists()
